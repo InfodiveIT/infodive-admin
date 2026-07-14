@@ -268,11 +268,21 @@ export const HomeTrustStatsEdit = () => (
     <SimpleForm toolbar={<EditToolbarWithoutDelete />}>
       <TextInput source="eyebrow" label="Categoria (Eyebrow)" validate={required()} />
       <TextInput source="prefixo" label="Prefixo (Ex: +)" />
-      <NumberInput source="valor" validate={required()} label="Valor Numérico" />
+      <NumberInput
+        source="valor"
+        validate={required()}
+        label="Valor Numérico Final (Resultado Exibido)"
+        helperText="O número final que será exibido no cartão."
+      />
       <TextInput source="sufixo" label="Sufixo (Ex: %)" />
       <TextInput source="titulo" validate={required()} label="Título (Ex: Clientes atendidos)" fullWidth />
       <TextInput source="descricao" label="Descrição detalhada" multiline fullWidth />
-      <NumberInput source="valorInicial" label="Valor Inicial da Animação" />
+      <NumberInput
+        source="valorInicial"
+        label="Início da Contagem Animada"
+        defaultValue={0}
+        helperText="Número onde a animação contadora inicia ao rolar a página."
+      />
       <NumberInput source="ordem" label="Ordem de exibição" />
     </SimpleForm>
   </Edit>
@@ -284,8 +294,18 @@ export const HomeTrustStatsCreate = () => (
       <TextInput source="titulo" validate={required()} label="Título" />
       <TextInput source="eyebrow" label="Eyebrow" />
       <TextInput source="prefixo" label="Prefixo" />
-      <NumberInput source="valor" validate={required()} label="Valor Numérico" />
-      <NumberInput source="valorInicial" defaultValue={0} label="Valor Inicial" />
+      <NumberInput
+        source="valor"
+        validate={required()}
+        label="Valor Numérico Final (Resultado Exibido)"
+        helperText="O número final que será exibido no cartão."
+      />
+      <NumberInput
+        source="valorInicial"
+        label="Início da Contagem Animada"
+        defaultValue={0}
+        helperText="Número onde a animação contadora inicia ao rolar a página."
+      />
       <TextInput source="sufixo" label="Sufixo" />
       <TextInput source="descricao" label="Descrição detalhada" multiline fullWidth />
       <NumberInput source="ordem" defaultValue={1} label="Ordem" />

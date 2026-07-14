@@ -26,11 +26,20 @@ export const SobreNumerosEdit = () => (
       <ArrayInput source="stats" label="Métricas/Estatísticas">
         <SimpleFormIterator>
           <TextInput source="prefixo" label="Prefixo (Ex: +)" />
-          <NumberInput source="valor" label="Valor Numérico Final" validate={required()} />
-          <NumberInput source="valorInicial" label="Valor Numérico Inicial (para Ticker)" defaultValue={0} />
+          <NumberInput
+            source="valor"
+            label="Valor Numérico Final (Resultado Exibido)"
+            validate={required()}
+            helperText="O número final que será exibido no cartão (Ex: 2003, 500, 20)."
+          />
+          <NumberInput
+            source="valorInicial"
+            label="Início da Contagem Animada"
+            defaultValue={0}
+            helperText="Número onde a animação contadora inicia ao rolar a página (Ex: 0 para contar até 500, ou 1990 para contar até 2003)."
+          />
           <TextInput source="sufixo" label="Sufixo (Ex: %)" />
           <TextInput source="label" label="Rótulo (Ex: Projetos executados)" validate={required()} fullWidth />
-          <TextInput source="coluna" label="ID da Coluna (Opcional)" />
         </SimpleFormIterator>
       </ArrayInput>
     </SimpleForm>
