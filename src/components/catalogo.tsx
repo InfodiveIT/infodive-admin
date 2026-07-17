@@ -77,6 +77,17 @@ const SolucaoFormFields = () => (
       <TextInput source="subtituloCurto" label="Subtítulo Curto (Exibido no Card em azul)" fullWidth />
       <TextInput source="descricaoCurta" label="Descrição Curta do Card" multiline fullWidth />
 
+      <div style={{ marginTop: '1.25rem', marginBottom: '1.25rem' }}>
+        <h4 style={{ margin: '0 0 0.5rem 0', color: '#e2e8f0', fontSize: '0.95rem', fontWeight: 600 }}>
+          🔹 Recursos Chave (Exibidos como bullet points no Card)
+        </h4>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1rem' }}>
+          <TextInput source="recursoChave1" label="Recurso Chave 1 (Ex: Servidores Dedicados)" fullWidth />
+          <TextInput source="recursoChave2" label="Recurso Chave 2 (Ex: Arquitetura Enterprise)" fullWidth />
+          <TextInput source="recursoChave3" label="Recurso Chave 3 (Ex: Suporte 24/7 Especializado)" fullWidth />
+        </div>
+      </div>
+
       <div style={{ display: 'flex', gap: '2rem', marginTop: '0.5rem' }}>
         <NumberInput source="ordem" defaultValue={1} label="Ordem de Exibição" />
         <BooleanInput source="ativo" defaultValue={true} label="Ativo no Site?" />
