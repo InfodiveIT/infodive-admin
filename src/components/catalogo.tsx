@@ -51,14 +51,14 @@ const SolucaoFormFields = () => (
     <div style={{
       marginBottom: '2rem',
       padding: '1.5rem',
-      backgroundColor: '#f8fafc',
+      backgroundColor: '#1e293b',
       borderRadius: '0.75rem',
-      border: '1px solid #e2e8f0'
+      border: '1px solid #334155'
     }}>
-      <h3 style={{ margin: '0 0 0.5rem 0', color: '#0f172a', fontSize: '1.05rem', fontWeight: 700 }}>
+      <h3 style={{ margin: '0 0 0.5rem 0', color: '#f8fafc', fontSize: '1.05rem', fontWeight: 700 }}>
         📌 PARTE 1 — CARD DA SOLUÇÃO (Exibido nas listagens de soluções)
       </h3>
-      <p style={{ margin: '0 0 1.25rem 0', color: '#64748b', fontSize: '0.85rem' }}>
+      <p style={{ margin: '0 0 1.25rem 0', color: '#94a3b8', fontSize: '0.85rem' }}>
         Defina os dados exibidos no Card da Solução na vitrine de soluções.
       </p>
 
@@ -87,14 +87,14 @@ const SolucaoFormFields = () => (
     <div style={{
       marginBottom: '1.5rem',
       padding: '1.5rem',
-      backgroundColor: '#f1f5f9',
+      backgroundColor: '#1e293b',
       borderRadius: '0.75rem',
-      border: '1px solid #cbd5e1'
+      border: '1px solid #334155'
     }}>
-      <h3 style={{ margin: '0 0 0.5rem 0', color: '#0f172a', fontSize: '1.05rem', fontWeight: 700 }}>
+      <h3 style={{ margin: '0 0 0.5rem 0', color: '#f8fafc', fontSize: '1.05rem', fontWeight: 700 }}>
         📄 PARTE 2 — PÁGINA DETALHADA DA SOLUÇÃO (/solucoes/[slug])
       </h3>
-      <p style={{ margin: '0 0 1.25rem 0', color: '#64748b', fontSize: '0.85rem' }}>
+      <p style={{ margin: '0 0 1.25rem 0', color: '#94a3b8', fontSize: '0.85rem' }}>
         Conteúdo expandido exibido na página dedicada da Solução. <em>Nota: Título e Subtítulo da página são mantidos iguais aos definidos na Parte 1.</em>
       </p>
 
@@ -105,10 +105,10 @@ const SolucaoFormFields = () => (
       </ImageInput>
 
       <div style={{ marginTop: '1.5rem', marginBottom: '1.5rem' }}>
-        <h4 style={{ margin: '0 0 0.25rem 0', color: '#1e293b', fontSize: '0.95rem', fontWeight: 600 }}>
+        <h4 style={{ margin: '0 0 0.25rem 0', color: '#e2e8f0', fontSize: '0.95rem', fontWeight: 600 }}>
           💡 Capacidades Técnicas & Recursos
         </h4>
-        <p style={{ margin: '0 0 0.75rem 0', color: '#64748b', fontSize: '0.8rem' }}>
+        <p style={{ margin: '0 0 0.75rem 0', color: '#94a3b8', fontSize: '0.8rem' }}>
           No Card da Solução, os títulos serão listados sob <strong>RECURSOS CHAVE</strong>. Na página detalhada, serão exibidos como cards em <strong>Capacidades Técnicas</strong> com a descrição completa.
         </p>
 
@@ -123,11 +123,11 @@ const SolucaoFormFields = () => (
       <div style={{
         marginTop: '1.5rem',
         padding: '1.25rem',
-        backgroundColor: '#ffffff',
+        backgroundColor: '#0f172a',
         borderRadius: '0.5rem',
-        border: '1px solid #e2e8f0'
+        border: '1px solid #334155'
       }}>
-        <h4 style={{ margin: '0 0 0.5rem 0', color: '#1e293b', fontSize: '0.95rem', fontWeight: 600 }}>
+        <h4 style={{ margin: '0 0 0.5rem 0', color: '#e2e8f0', fontSize: '0.95rem', fontWeight: 600 }}>
           🤝 Bloco de Parcerias e Fabricantes Homologados
         </h4>
 
@@ -328,14 +328,14 @@ const ProdutoFormFields = () => (
     <div style={{
       marginBottom: '2rem',
       padding: '1.5rem',
-      backgroundColor: '#f8fafc',
+      backgroundColor: '#1e293b',
       borderRadius: '0.75rem',
-      border: '1px solid #e2e8f0'
+      border: '1px solid #334155'
     }}>
-      <h3 style={{ margin: '0 0 0.5rem 0', color: '#0f172a', fontSize: '1.05rem', fontWeight: 700 }}>
+      <h3 style={{ margin: '0 0 0.5rem 0', color: '#f8fafc', fontSize: '1.05rem', fontWeight: 700 }}>
         🏷️ PARTE 1 — IDENTIFICAÇÃO E CLASSIFICAÇÃO DO PRODUTO (Hero & Vitrine)
       </h3>
-      <p style={{ margin: '0 0 1.25rem 0', color: '#64748b', fontSize: '0.85rem' }}>
+      <p style={{ margin: '0 0 1.25rem 0', color: '#94a3b8', fontSize: '0.85rem' }}>
         Configure o nome, fabricante, categoria e o resumo exibido no topo da página do produto e nos cards do catálogo.
       </p>
 
@@ -374,14 +374,14 @@ const ProdutoFormFields = () => (
     <div style={{
       marginBottom: '2rem',
       padding: '1.5rem',
-      backgroundColor: '#f1f5f9',
+      backgroundColor: '#1e293b',
       borderRadius: '0.75rem',
-      border: '1px solid #cbd5e1'
+      border: '1px solid #334155'
     }}>
-      <h3 style={{ margin: '0 0 0.5rem 0', color: '#0f172a', fontSize: '1.05rem', fontWeight: 700 }}>
+      <h3 style={{ margin: '0 0 0.5rem 0', color: '#f8fafc', fontSize: '1.05rem', fontWeight: 700 }}>
         📄 PARTE 2 — CONTEÚDO DA PÁGINA DETALHADA (/produtos/[slug])
       </h3>
-      <p style={{ margin: '0 0 1.25rem 0', color: '#64748b', fontSize: '0.85rem' }}>
+      <p style={{ margin: '0 0 1.25rem 0', color: '#94a3b8', fontSize: '0.85rem' }}>
         Conteúdo completo exibido nas abas <strong>Visão geral</strong>, <strong>Diferenciais</strong> e <strong>Casos de uso</strong> da página do produto.
       </p>
 
@@ -392,10 +392,10 @@ const ProdutoFormFields = () => (
       </ImageInput>
 
       <div style={{ marginTop: '1.5rem', marginBottom: '1.5rem' }}>
-        <h4 style={{ margin: '0 0 0.25rem 0', color: '#1e293b', fontSize: '0.95rem', fontWeight: 600 }}>
+        <h4 style={{ margin: '0 0 0.25rem 0', color: '#e2e8f0', fontSize: '0.95rem', fontWeight: 600 }}>
           ✨ Aba 2: Diferenciais do Produto
         </h4>
-        <p style={{ margin: '0 0 0.75rem 0', color: '#64748b', fontSize: '0.8rem' }}>
+        <p style={{ margin: '0 0 0.75rem 0', color: '#94a3b8', fontSize: '0.8rem' }}>
           Adicione os pontos fortes e recursos exclusivos deste produto.
         </p>
 
@@ -408,10 +408,10 @@ const ProdutoFormFields = () => (
       </div>
 
       <div style={{ marginTop: '1.5rem', marginBottom: '1.5rem' }}>
-        <h4 style={{ margin: '0 0 0.25rem 0', color: '#1e293b', fontSize: '0.95rem', fontWeight: 600 }}>
+        <h4 style={{ margin: '0 0 0.25rem 0', color: '#e2e8f0', fontSize: '0.95rem', fontWeight: 600 }}>
           🎯 Aba 3: Casos de Uso do Produto
         </h4>
-        <p style={{ margin: '0 0 0.75rem 0', color: '#64748b', fontSize: '0.8rem' }}>
+        <p style={{ margin: '0 0 0.75rem 0', color: '#94a3b8', fontSize: '0.8rem' }}>
           Adicione cenários reais de aplicação deste produto em empresas B2B.
         </p>
 
@@ -426,11 +426,11 @@ const ProdutoFormFields = () => (
       <div style={{
         marginTop: '1.5rem',
         padding: '1.25rem',
-        backgroundColor: '#ffffff',
+        backgroundColor: '#0f172a',
         borderRadius: '0.5rem',
-        border: '1px solid #e2e8f0'
+        border: '1px solid #334155'
       }}>
-        <h4 style={{ margin: '0 0 0.5rem 0', color: '#1e293b', fontSize: '0.95rem', fontWeight: 600 }}>
+        <h4 style={{ margin: '0 0 0.5rem 0', color: '#e2e8f0', fontSize: '0.95rem', fontWeight: 600 }}>
           ⚙️ Serviços Profissionais Vinculados
         </h4>
         <ReferenceArrayInput source="servicoIds" reference="servicos" label="Serviços Profissionais Prestados para este Produto">
