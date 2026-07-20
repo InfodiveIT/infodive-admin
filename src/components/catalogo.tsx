@@ -25,6 +25,11 @@ import {
 import { AdminHelpAside } from './AdminHelpBanner';
 import { LucideIconPickerInput } from './LucideIconPicker';
 
+const maxSixServices = (value: any) =>
+  value && Array.isArray(value) && value.length > 6
+    ? 'Selecione no máximo 6 serviços vinculados.'
+    : undefined;
+
 // ─── SOLUÇÕES ──────────────────────────────────────────────────────────────
 export const SolucaoList = () => (
   <List sort={{ field: 'ordem', order: 'ASC' }} perPage={50} aside={
@@ -446,7 +451,12 @@ const ProdutoFormFields = () => (
           ⚙️ Serviços Profissionais Vinculados
         </h4>
         <ReferenceArrayInput source="servicoIds" reference="servicos" label="Serviços Profissionais Prestados para este Produto">
-          <SelectArrayInput optionText="nome" helperText="Selecione quais serviços profissionais da Infodive (ex: Sustentação 24/7, Implementação, DRaaS) estão vinculados a este produto." fullWidth />
+          <SelectArrayInput
+            optionText="nome"
+            validate={maxSixServices}
+            helperText="Selecione no máximo 6 serviços profissionais da Infodive (ex: Sustentação 24/7, Implementação, DRaaS) vinculados a este produto."
+            fullWidth
+          />
         </ReferenceArrayInput>
       </div>
     </div>
