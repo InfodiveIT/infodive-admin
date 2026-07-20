@@ -22,6 +22,7 @@ import {
   ReferenceField,
   required,
 } from 'react-admin';
+import { dataProvider } from '../lib/dataProvider';
 import { AdminHelpAside } from './AdminHelpBanner';
 import { LucideIconPickerInput } from './LucideIconPicker';
 
@@ -29,6 +30,42 @@ const maxSixServices = (value: any) =>
   value && Array.isArray(value) && value.length > 6
     ? 'Selecione no máximo 6 serviços vinculados.'
     : undefined;
+
+const validateProdutoDestaque = async (values: any) => {
+  const errors: any = {};
+  if (values.destaque) {
+    try {
+      const res = await dataProvider.getList('produtos', {
+        filter: { destaque: true },
+        pagination: { page: 1, perPage: 100 },
+        sort: { field: 'id', order: 'ASC' }
+      });
+      const existingDestaques = res.data.filter((item: any) => item.id !== values.id);
+      if (existingDestaques.length >= 6) {
+        errors.destaque = 'Limite atingido! Já existem 6 produtos marcados como destaque. Desmarque outro produto antes de destacar este.';
+      }
+    } catch {}
+  }
+  return errors;
+};
+
+const validateFabricanteDestaque = async (values: any) => {
+  const errors: any = {};
+  if (values.destaque) {
+    try {
+      const res = await dataProvider.getList('fabricantes', {
+        filter: { destaque: true },
+        pagination: { page: 1, perPage: 100 },
+        sort: { field: 'id', order: 'ASC' }
+      });
+      const existingDestaques = res.data.filter((item: any) => item.id !== values.id);
+      if (existingDestaques.length >= 6) {
+        errors.destaque = 'Limite atingido! Já existem 6 fabricantes marcados como destaque. Desmarque outro fabricante antes de destacar este.';
+      }
+    } catch {}
+  }
+  return errors;
+};
 
 // ─── SOLUÇÕES ──────────────────────────────────────────────────────────────
 export const SolucaoList = () => (
@@ -234,7 +271,7 @@ export const FabricanteList = () => (
 
 export const FabricanteEdit = () => (
   <Edit title="Editar Fabricante">
-    <SimpleForm>
+    <SimpleForm validate={validateFabricanteDestaque}>
       <TextInput source="nome" validate={required()} label="Nome" />
       <TextInput source="slug" validate={required()} label="Slug (Ex: ibm)" />
       <TextInput source="siteOficial" label="Site Oficial" fullWidth />
@@ -253,7 +290,7 @@ export const FabricanteEdit = () => (
 
 export const FabricanteCreate = () => (
   <Create title="Cadastrar Fabricante">
-    <SimpleForm>
+    <SimpleForm validate={validateFabricanteDestaque}>
       <TextInput source="nome" validate={required()} label="Nome" />
       <TextInput source="slug" validate={required()} label="Slug" />
       <TextInput source="siteOficial" label="Site Oficial" fullWidth />
@@ -465,7 +502,7 @@ const ProdutoFormFields = () => (
 
 export const ProdutoEdit = () => (
   <Edit title="Editar Produto">
-    <SimpleForm>
+    <SimpleForm validate={validateProdutoDestaque}>
       <ProdutoFormFields />
     </SimpleForm>
   </Edit>
@@ -473,7 +510,7 @@ export const ProdutoEdit = () => (
 
 export const ProdutoCreate = () => (
   <Create title="Cadastrar Produto">
-    <SimpleForm>
+    <SimpleForm validate={validateProdutoDestaque}>
       <ProdutoFormFields />
     </SimpleForm>
   </Create>
