@@ -78,6 +78,20 @@ const checkAndUploadFiles = async (data: any): Promise<any> => {
     return processedData;
 };
 
+const frontendUrl = process.env.NEXT_PUBLIC_FRONTEND_URL || 'http://localhost:3000';
+
+const triggerRevalidation = async (resource: string) => {
+    try {
+        await fetch(`${frontendUrl}/api/revalidate`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ resource }),
+        });
+    } catch {
+        // Silenciosamente ignora em caso de erro na chamada de revalidação
+    }
+};
+
 export const dataProvider: DataProvider = {
     getList: async (resource, params) => {
         const { page, perPage } = params.pagination || { page: 1, perPage: 10 };
@@ -209,6 +223,7 @@ export const dataProvider: DataProvider = {
         if (resource === 'paginas-hero' || resource === 'secoes-home' || resource === 'ctas') {
             json.id = params.id;
         }
+        triggerRevalidation(resource);
         return { data: json };
     },
     
@@ -221,6 +236,7 @@ export const dataProvider: DataProvider = {
                 })
             )
         );
+        triggerRevalidation(resource);
         return { data: responses.map(({ json }) => json.id) };
     },
     
@@ -240,6 +256,7 @@ export const dataProvider: DataProvider = {
             method: 'POST',
             body: JSON.stringify(processedData),
         });
+        triggerRevalidation(resource);
         return { data: json };
     },
     
@@ -248,6 +265,7 @@ export const dataProvider: DataProvider = {
         await httpClient(url, {
             method: 'DELETE',
         });
+        triggerRevalidation(resource);
         return { data: params.previousData as any };
     },
     
@@ -259,6 +277,7 @@ export const dataProvider: DataProvider = {
                 })
             )
         );
+        triggerRevalidation(resource);
         return { data: params.ids };
     },
 };

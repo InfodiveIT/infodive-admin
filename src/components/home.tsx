@@ -17,6 +17,9 @@ import {
   SaveButton,
   TopToolbar,
   ListButton,
+  ReferenceInput,
+  SelectInput,
+  ReferenceField,
 } from 'react-admin';
 import { AdminHelpAside } from './AdminHelpBanner';
 import { LucideIconPickerInput } from './LucideIconPicker';
@@ -68,6 +71,9 @@ export const HomeSolucoesBentoList = () => (
   }>
     <Datagrid rowClick="edit" bulkActionButtons={false}>
       <TextField source="nome" label="Nome" />
+      <ReferenceField source="solucaoId" reference="solucoes" label="Solução Vinculada" emptyText="Nenhuma">
+        <TextField source="titulo" />
+      </ReferenceField>
       <TextField source="icone" label="Ícone" />
       <NumberField source="ordem" label="Ordem" />
     </Datagrid>
@@ -86,6 +92,9 @@ export const HomeSolucoesBentoEdit = () => (
       <TextInput source="nome" validate={required()} label="Nome da Solução" />
       <TextInput source="descricao" label="Descrição" multiline fullWidth />
       <LucideIconPickerInput source="icone" label="Ícone" />
+      <ReferenceInput source="solucaoId" reference="solucoes">
+        <SelectInput optionText="titulo" label="Solução Vinculada (Redirecionamento do Card)" emptyText="Nenhuma (Link padrão /solucoes)" fullWidth />
+      </ReferenceInput>
       <NumberInput source="ordem" label="Ordem" />
       <FormDataConsumer>
         {({ formData, ...rest }) => 
@@ -124,6 +133,9 @@ export const HomeSolucoesBentoCreate = () => (
       <TextInput source="nome" validate={required()} label="Nome da Solução" />
       <TextInput source="descricao" label="Descrição" multiline fullWidth />
       <LucideIconPickerInput source="icone" label="Ícone" />
+      <ReferenceInput source="solucaoId" reference="solucoes">
+        <SelectInput optionText="titulo" label="Solução Vinculada (Redirecionamento do Card)" emptyText="Nenhuma (Link padrão /solucoes)" fullWidth />
+      </ReferenceInput>
       <NumberInput source="ordem" defaultValue={1} label="Ordem" />
       <FormDataConsumer>
         {({ formData, ...rest }) => 
