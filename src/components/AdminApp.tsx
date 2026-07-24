@@ -542,6 +542,18 @@ const SingletonRedirect = ({ to }: { to: string }) => (
   <Navigate to={to} replace />
 );
 
+// Redireciona o dashboard inicial com base no perfil do usuario
+const CustomDashboard = () => {
+  const { permissions, isLoading } = usePermissions();
+  if (isLoading) return null;
+
+  if (permissions === 'BLOGGER') {
+    return <Navigate to="/conteudos" replace />;
+  }
+
+  return <Navigate to="/categorias" replace />;
+};
+
 export default function AdminApp() {
   return (
     <Admin
@@ -553,6 +565,7 @@ export default function AdminApp() {
       darkTheme={myDarkTheme}
       defaultTheme="dark"
       layout={MyLayout}
+      dashboard={CustomDashboard}
     >
       {/* ─── 1. CATÁLOGO ────────────────────────────────────────────────────── */}
       <Resource
