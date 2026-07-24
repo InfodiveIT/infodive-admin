@@ -554,6 +554,28 @@ const CustomDashboard = () => {
   return <Navigate to="/categorias" replace />;
 };
 
+// Guard de proteção estrita de rota para administradores
+const AdminOnlyGuard = ({ children }: { children: React.ReactNode }) => {
+  const { permissions, isLoading } = usePermissions();
+  if (isLoading) return null;
+
+  if (permissions === 'BLOGGER') {
+    return <Navigate to="/conteudos" replace />;
+  }
+
+  return <>{children}</>;
+};
+
+const withAdminGuard = (Component: React.ComponentType<any>) => {
+  const GuardedComponent = (props: any) => (
+    <AdminOnlyGuard>
+      <Component {...props} />
+    </AdminOnlyGuard>
+  );
+  GuardedComponent.displayName = `withAdminGuard(${Component.displayName || Component.name || 'Component'})`;
+  return GuardedComponent;
+};
+
 export default function AdminApp() {
   return (
     <Admin
@@ -571,45 +593,45 @@ export default function AdminApp() {
       <Resource
         name="categorias"
         options={{ label: 'Categorias' }}
-        list={CategoriaList}
-        edit={CategoriaEdit}
-        create={CategoriaCreate}
+        list={withAdminGuard(CategoriaList)}
+        edit={withAdminGuard(CategoriaEdit)}
+        create={withAdminGuard(CategoriaCreate)}
         icon={LabelIcon}
       />
       <Resource
         name="solucoes"
         options={{ label: 'Soluções' }}
-        list={SolucaoList}
-        edit={SolucaoEdit}
-        create={SolucaoCreate}
+        list={withAdminGuard(SolucaoList)}
+        edit={withAdminGuard(SolucaoEdit)}
+        create={withAdminGuard(SolucaoCreate)}
         icon={CategoryIcon}
       />
       <Resource
         name="produtos"
         options={{ label: 'Produtos' }}
-        list={ProdutoList}
-        edit={ProdutoEdit}
-        create={ProdutoCreate}
+        list={withAdminGuard(ProdutoList)}
+        edit={withAdminGuard(ProdutoEdit)}
+        create={withAdminGuard(ProdutoCreate)}
         icon={InventoryIcon}
       />
       <Resource
         name="fabricantes"
         options={{ label: 'Fabricantes' }}
-        list={FabricanteList}
-        edit={FabricanteEdit}
-        create={FabricanteCreate}
+        list={withAdminGuard(FabricanteList)}
+        edit={withAdminGuard(FabricanteEdit)}
+        create={withAdminGuard(FabricanteCreate)}
         icon={BusinessIcon}
       />
       <Resource
         name="servicos"
         options={{ label: 'Serviços' }}
-        list={ServicoList}
-        edit={ServicoEdit}
-        create={ServicoCreate}
+        list={withAdminGuard(ServicoList)}
+        edit={withAdminGuard(ServicoEdit)}
+        create={withAdminGuard(ServicoCreate)}
         icon={BuildIcon}
       />
 
-      {/* ─── 2. CONTEÚDO ───────────────────────────────────────────────────── */}
+      {/* ─── 2. CONTEÚDO (PERMITIDO PARA BLOGGER) ─────────────────────────── */}
       <Resource
         name="conteudos"
         options={{ label: 'Artigos / Blog' }}
@@ -621,9 +643,9 @@ export default function AdminApp() {
       <Resource
         name="cases"
         options={{ label: 'Cases' }}
-        list={CaseList}
-        edit={CaseEdit}
-        create={CaseCreate}
+        list={withAdminGuard(CaseList)}
+        edit={withAdminGuard(CaseEdit)}
+        create={withAdminGuard(CaseCreate)}
         icon={StarIcon}
       />
 
@@ -631,47 +653,47 @@ export default function AdminApp() {
       <Resource
         name="hero-carousel"
         options={{ label: 'Home - Carrossel' }}
-        list={HeroCarouselList}
-        edit={HeroCarouselEdit}
-        create={HeroCarouselCreate}
+        list={withAdminGuard(HeroCarouselList)}
+        edit={withAdminGuard(HeroCarouselEdit)}
+        create={withAdminGuard(HeroCarouselCreate)}
         icon={ViewCarouselIcon}
       />
       <Resource
         name="home-solucoes-bento"
         options={{ label: 'Home - Bento Grid' }}
-        list={HomeSolucoesBentoList}
-        edit={HomeSolucoesBentoEdit}
+        list={withAdminGuard(HomeSolucoesBentoList)}
+        edit={withAdminGuard(HomeSolucoesBentoEdit)}
         icon={DashboardIcon}
       />
 
       <Resource
         name="home-problemas"
         options={{ label: 'Home - Problemas' }}
-        list={HomeProblemasList}
-        edit={HomeProblemasEdit}
-        create={HomeProblemasCreate}
+        list={withAdminGuard(HomeProblemasList)}
+        edit={withAdminGuard(HomeProblemasEdit)}
+        create={withAdminGuard(HomeProblemasCreate)}
         icon={ReportProblemIcon}
       />
       <Resource
         name="home-trust-stats"
         options={{ label: 'Home - Trust Stats' }}
-        list={HomeTrustStatsList}
-        edit={HomeTrustStatsEdit}
+        list={withAdminGuard(HomeTrustStatsList)}
+        edit={withAdminGuard(HomeTrustStatsEdit)}
         icon={BarChartIcon}
       />
       <Resource
         name="secoes-home"
         options={{ label: 'Home - Títulos Seções' }}
-        list={SecaoHomeList}
-        edit={SecaoHomeEdit}
+        list={withAdminGuard(SecaoHomeList)}
+        edit={withAdminGuard(SecaoHomeEdit)}
         icon={LabelIcon}
       />
       <Resource
         name="faq"
         options={{ label: 'Home - FAQ' }}
-        list={FaqList}
-        edit={FaqEdit}
-        create={FaqCreate}
+        list={withAdminGuard(FaqList)}
+        edit={withAdminGuard(FaqEdit)}
+        create={withAdminGuard(FaqCreate)}
         icon={QuestionAnswerIcon}
       />
 
@@ -679,15 +701,15 @@ export default function AdminApp() {
       <Resource
         name="paginas-hero"
         options={{ label: 'Páginas - Heroes' }}
-        list={PaginaHeroList}
-        edit={PaginaHeroEdit}
+        list={withAdminGuard(PaginaHeroList)}
+        edit={withAdminGuard(PaginaHeroEdit)}
         icon={PageviewIcon}
       />
       <Resource
         name="ctas"
         options={{ label: 'Páginas - CTAs' }}
-        list={CtaList}
-        edit={CtaEdit}
+        list={withAdminGuard(CtaList)}
+        edit={withAdminGuard(CtaEdit)}
         icon={TouchAppIcon}
       />
 
@@ -695,8 +717,8 @@ export default function AdminApp() {
       <Resource
         name="config-footer"
         options={{ label: 'Config - Footer' }}
-        list={() => <SingletonRedirect to="/config-footer/singleton" />}
-        edit={ConfigFooterEdit}
+        list={withAdminGuard(() => <SingletonRedirect to="/config-footer/singleton" />)}
+        edit={withAdminGuard(ConfigFooterEdit)}
         icon={SettingsIcon}
       />
       <Resource
@@ -709,8 +731,8 @@ export default function AdminApp() {
       <Resource
         name="contato-info"
         options={{ label: 'Config - Contato' }}
-        list={() => <SingletonRedirect to="/contato-info/singleton" />}
-        edit={ContatoInfoEdit}
+        list={withAdminGuard(() => <SingletonRedirect to="/contato-info/singleton" />)}
+        edit={withAdminGuard(ContatoInfoEdit)}
         icon={ContactPhoneIcon}
       />
 
@@ -718,29 +740,29 @@ export default function AdminApp() {
       <Resource
         name="sobre-numeros"
         options={{ label: 'Sobre - Números' }}
-        list={() => <SingletonRedirect to="/sobre-numeros/singleton" />}
-        edit={SobreNumerosEdit}
+        list={withAdminGuard(() => <SingletonRedirect to="/sobre-numeros/singleton" />)}
+        edit={withAdminGuard(SobreNumerosEdit)}
         icon={InfoIcon}
       />
       <Resource
         name="sobre-timeline"
         options={{ label: 'Sobre - Timeline' }}
-        list={() => <SingletonRedirect to="/sobre-timeline/singleton" />}
-        edit={SobreTimelineEdit}
+        list={withAdminGuard(() => <SingletonRedirect to="/sobre-timeline/singleton" />)}
+        edit={withAdminGuard(SobreTimelineEdit)}
         icon={TimelineIcon}
       />
       <Resource
         name="sobre-valores"
         options={{ label: 'Sobre - Valores' }}
-        list={() => <SingletonRedirect to="/sobre-valores/singleton" />}
-        edit={SobreValoresEdit}
+        list={withAdminGuard(() => <SingletonRedirect to="/sobre-valores/singleton" />)}
+        edit={withAdminGuard(SobreValoresEdit)}
         icon={InfoIcon}
       />
       <Resource
         name="sobre-cultura"
         options={{ label: 'Sobre - Cultura' }}
-        list={() => <SingletonRedirect to="/sobre-cultura/singleton" />}
-        edit={SobreCulturaEdit}
+        list={withAdminGuard(() => <SingletonRedirect to="/sobre-cultura/singleton" />)}
+        edit={withAdminGuard(SobreCulturaEdit)}
         icon={CameraAltIcon}
       />
 
@@ -748,15 +770,15 @@ export default function AdminApp() {
       <Resource
         name="servicos-etapas"
         options={{ label: 'Serviços - Etapas' }}
-        list={() => <SingletonRedirect to="/servicos-etapas/singleton" />}
-        edit={ServicosEtapasEdit}
+        list={withAdminGuard(() => <SingletonRedirect to="/servicos-etapas/singleton" />)}
+        edit={withAdminGuard(ServicosEtapasEdit)}
         icon={TimelineIcon}
       />
       <Resource
         name="servicos-metodologia"
         options={{ label: 'Serviços - Metodologia' }}
-        list={() => <SingletonRedirect to="/servicos-metodologia/singleton" />}
-        edit={ServicosMetodologiaEdit}
+        list={withAdminGuard(() => <SingletonRedirect to="/servicos-metodologia/singleton" />)}
+        edit={withAdminGuard(ServicosMetodologiaEdit)}
         icon={BuildIcon}
       />
 
@@ -764,8 +786,8 @@ export default function AdminApp() {
       <Resource
         name="leads"
         options={{ label: 'Leads Recebidos' }}
-        list={LeadList}
-        show={LeadShow}
+        list={withAdminGuard(LeadList)}
+        show={withAdminGuard(LeadShow)}
         icon={PeopleIcon}
       />
 
@@ -773,7 +795,7 @@ export default function AdminApp() {
       <Resource
         name="logs-auditoria"
         options={{ label: 'Logs de Auditoria' }}
-        list={LogAuditoriaList}
+        list={withAdminGuard(LogAuditoriaList)}
         icon={HistoryIcon}
       />
     </Admin>
