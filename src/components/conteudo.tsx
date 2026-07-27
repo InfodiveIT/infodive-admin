@@ -137,14 +137,6 @@ export const ConteudoEdit = () => (
 
       <DateInput source="publicadoEm" label="Data de Publicação" />
       
-      <ReferenceInput source="categoriaId" reference="categorias" label="Solução Relacionada (Opcional)">
-        <SelectInput optionText="nome" />
-      </ReferenceInput>
-
-      <ReferenceInput source="fabricanteId" reference="fabricantes" label="Fabricante Relacionado (Opcional)">
-        <SelectInput optionText="nome" />
-      </ReferenceInput>
-
       <ReferenceInput source="produtoId" reference="produtos" label="Produto Relacionado (Opcional)">
         <SelectInput optionText="nome" />
       </ReferenceInput>
@@ -186,14 +178,6 @@ export const ConteudoCreate = () => (
 
       <DateInput source="publicadoEm" label="Data de Publicação" defaultValue={new Date()} />
       
-      <ReferenceInput source="categoriaId" reference="categorias" label="Solução Relacionada (Opcional)">
-        <SelectInput optionText="nome" />
-      </ReferenceInput>
-
-      <ReferenceInput source="fabricanteId" reference="fabricantes" label="Fabricante Relacionado (Opcional)">
-        <SelectInput optionText="nome" />
-      </ReferenceInput>
-
       <ReferenceInput source="produtoId" reference="produtos" label="Produto Relacionado (Opcional)">
         <SelectInput optionText="nome" />
       </ReferenceInput>
