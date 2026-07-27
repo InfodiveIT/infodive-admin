@@ -32,13 +32,82 @@ export const ConteudoList = () => (
     <Datagrid rowClick="edit">
       <TextField source="titulo" label="Título" />
       <TextField source="tipo" label="Tipo" />
-      <TextField source="origem" label="Origem" />
       <DateField source="publicadoEm" label="Publicado Em" />
       <BooleanField source="destaque" label="Destaque Home" />
       <BooleanField source="ativo" label="Ativo" />
     </Datagrid>
   </List>
 );
+
+import { useWatch } from 'react-hook-form';
+
+function getYouTubeEmbedUrl(url?: string): string | null {
+  if (!url) return null;
+  const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|shorts\/|watch\?v=|&v=)([^#&?]*).*/;
+  const match = url.match(regExp);
+  if (match && match[2].length === 11) {
+    return `https://www.youtube-nocookie.com/embed/${match[2]}`;
+  }
+  if (url.includes('youtube.com/embed/')) return url;
+  return null;
+}
+
+const MediaAndLinkFields = () => {
+  const tipo = useWatch({ name: 'tipo' });
+  const urlExterna = useWatch({ name: 'urlExterna' });
+  const embedUrl = getYouTubeEmbedUrl(urlExterna);
+
+  if (tipo === 'VIDEO') {
+    return (
+      <div style={{ width: '100%', marginBottom: 16 }}>
+        <TextInput
+          source="urlExterna"
+          label="Link do Vídeo do YouTube (Ex: https://www.youtube.com/watch?v=...)"
+          helperText="Cole a URL do vídeo do YouTube para que seja reproduzido automaticamente na página."
+          fullWidth
+          validate={required()}
+        />
+        {embedUrl ? (
+          <div style={{ marginTop: 12, marginBottom: 16, borderRadius: 12, overflow: 'hidden', border: '1px solid rgba(255,255,255,0.15)', maxWidth: 640, aspectRatio: '16/9' }}>
+            <iframe
+              src={embedUrl}
+              title="Pré-visualização do vídeo"
+              style={{ width: '100%', height: '100%', border: 0 }}
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+            />
+          </div>
+        ) : (
+          urlExterna && (
+            <div style={{ marginTop: 8, marginBottom: 16, color: '#ff6b6b', fontSize: '0.85rem' }}>
+              URL de vídeo do YouTube inválida ou não reconhecida.
+            </div>
+          )
+        )}
+      </div>
+    );
+  }
+
+  return (
+    <>
+      <TextInput
+        source="urlExterna"
+        label="Link Externo / Saiba Mais (Opcional)"
+        helperText="Se preenchido, exibirá um bloco 'Saiba mais sobre esse conteúdo aqui: (link)' no final do artigo."
+        fullWidth
+      />
+
+      <ImageInput 
+        source="imagemUrl" 
+        label="Imagem do Banner do Artigo (Recomendado: 1200x675px - 16:9)" 
+        helperText="Tamanho recomendado: 1200x675px (Proporção 16:9 Widescreen). Formatos aceitos: WEBP ou PNG. Máximo: 1MB."
+        accept={{ 'image/png': ['.png'], 'image/webp': ['.webp'] }}
+      >
+        <ImageField source="src" title="title" />
+      </ImageInput>
+    </>
+  );
+};
 
 export const ConteudoEdit = () => (
   <Edit title="Editar Conteúdo" mutationMode="pessimistic">
@@ -55,18 +124,6 @@ export const ConteudoEdit = () => (
           { id: 'CASE', name: 'Case de Sucesso' },
           { id: 'DATASHEET', name: 'Datasheet' },
           { id: 'VIDEO', name: 'Vídeo' },
-          { id: 'POST_SOCIAL', name: 'Post de Rede Social' },
-        ]}
-        validate={required()}
-      />
-
-      <SelectInput
-        source="origem"
-        label="Origem do Conteúdo"
-        choices={[
-          { id: 'INTERNO', name: 'Blog Interno Infodive' },
-          { id: 'INSTAGRAM', name: 'Instagram' },
-          { id: 'LINKEDIN', name: 'LinkedIn' },
         ]}
         validate={required()}
       />
@@ -77,9 +134,6 @@ export const ConteudoEdit = () => (
       <TextInput source="tempoLeitura" label="Tempo de Leitura (Ex: 5 min de leitura)" />
       
       <TextInput source="conteudo" label="Corpo do Conteúdo (Markdown / Rich Text)" multiline fullWidth />
-
-      <TextInput source="urlExterna" label="URL Externa (Opcional, para Posts / Vídeos)" fullWidth />
-      <TextInput source="socialPostId" label="ID do Post Social (Opcional, para Instagram Embed)" />
 
       <DateInput source="publicadoEm" label="Data de Publicação" />
       
@@ -98,14 +152,7 @@ export const ConteudoEdit = () => (
       <BooleanInput source="destaque" label="Destaque na Página Inicial (Home)" defaultValue={false} />
       <BooleanInput source="ativo" label="Ativo" />
 
-      <ImageInput 
-        source="imagemUrl" 
-        label="Imagem do Banner do Artigo (Recomendado: 1200x675px - 16:9)" 
-        helperText="Tamanho recomendado: 1200x675px (Proporção 16:9 Widescreen). Formatos aceitos: WEBP ou PNG. Máximo: 1MB."
-        accept={{ 'image/png': ['.png'], 'image/webp': ['.webp'] }}
-      >
-        <ImageField source="src" title="title" />
-      </ImageInput>
+      <MediaAndLinkFields />
     </SimpleForm>
   </Edit>
 );
@@ -125,22 +172,9 @@ export const ConteudoCreate = () => (
           { id: 'CASE', name: 'Case de Sucesso' },
           { id: 'DATASHEET', name: 'Datasheet' },
           { id: 'VIDEO', name: 'Vídeo' },
-          { id: 'POST_SOCIAL', name: 'Post de Rede Social' },
         ]}
         validate={required()}
         defaultValue="ARTIGO"
-      />
-
-      <SelectInput
-        source="origem"
-        label="Origem do Conteúdo"
-        choices={[
-          { id: 'INTERNO', name: 'Blog Interno Infodive' },
-          { id: 'INSTAGRAM', name: 'Instagram' },
-          { id: 'LINKEDIN', name: 'LinkedIn' },
-        ]}
-        validate={required()}
-        defaultValue="INTERNO"
       />
 
       <TextInput source="descricao" label="Descrição / Resumo" multiline fullWidth />
@@ -149,9 +183,6 @@ export const ConteudoCreate = () => (
       <TextInput source="tempoLeitura" label="Tempo de Leitura" />
       
       <TextInput source="conteudo" label="Corpo do Conteúdo (Markdown / Rich Text)" multiline fullWidth />
-
-      <TextInput source="urlExterna" label="URL Externa (Opcional)" fullWidth />
-      <TextInput source="socialPostId" label="ID do Post Social (Opcional)" />
 
       <DateInput source="publicadoEm" label="Data de Publicação" defaultValue={new Date()} />
       
@@ -170,14 +201,7 @@ export const ConteudoCreate = () => (
       <BooleanInput source="destaque" label="Destaque na Página Inicial (Home)" defaultValue={false} />
       <BooleanInput source="ativo" defaultValue={true} label="Ativo" />
 
-      <ImageInput 
-        source="imagemUrl" 
-        label="Imagem do Banner do Artigo (Recomendado: 1200x675px - 16:9)" 
-        helperText="Tamanho recomendado: 1200x675px (Proporção 16:9 Widescreen). Formatos aceitos: WEBP ou PNG. Máximo: 1MB."
-        accept={{ 'image/png': ['.png'], 'image/webp': ['.webp'] }}
-      >
-        <ImageField source="src" title="title" />
-      </ImageInput>
+      <MediaAndLinkFields />
     </SimpleForm>
   </Create>
 );
@@ -187,7 +211,7 @@ export const CaseList = () => (
   <List sort={{ field: 'ordem', order: 'ASC' }} aside={
     <AdminHelpAside
       title="Onde estes Cases são exibidos?"
-      description={<>Histórias reais e depoimentos de clientes satisfeitos.<br /><br />Alimentam a seção de <strong>Cases & Depoimentos na Home (<code>/</code>)</strong> e as listagens no <strong>Blog</strong>.</>}
+      description={<>Histórias reais e depoimentos de clientes satisfeitos.<br /><br />Alimentam a seção de <strong>Cases & Depoimentos na Home (<code>/</code>)</strong>.</>}
     />
   }>
     <Datagrid rowClick="edit">

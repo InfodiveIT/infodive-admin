@@ -483,7 +483,6 @@ const MyMenu = () => {
           <Menu.Item to="/paginas-hero/blog" primaryText="Hero do Blog" leftIcon={<PageviewIcon />} />
           <Menu.Item to="/config-blog" primaryText="Textos & Redes Sociais" leftIcon={<SettingsIcon />} />
           <Menu.Item to="/conteudos" primaryText="Artigos / Postagens" leftIcon={<BookIcon />} />
-          <Menu.Item to="/cases" primaryText="Cases de Sucesso" leftIcon={<StarIcon />} />
           <Menu.Item to="/ctas/blog" primaryText="Bloco CTA" leftIcon={<TouchAppIcon />} />
         </List>
       </Collapse>
