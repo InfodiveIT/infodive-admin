@@ -18,6 +18,7 @@ import {
   ImageInput,
   ImageField,
   required,
+  useInput,
 } from 'react-admin';
 import { AdminHelpAside } from './AdminHelpBanner';
 
@@ -51,6 +52,225 @@ function getYouTubeEmbedUrl(url?: string): string | null {
   if (url.includes('youtube.com/embed/')) return url;
   return null;
 }
+
+type ArtigoBlocoSimples =
+  | { tipo: 'paragrafo'; texto: string }
+  | { tipo: 'subtitulo'; texto: string }
+  | { tipo: 'lista'; itens: string[] }
+  | { tipo: 'citacao'; texto: string };
+
+function parseMarkdownPreview(text?: string): ArtigoBlocoSimples[] {
+  if (!text || !text.trim()) return [];
+
+  if (text.trim().startsWith('[')) {
+    try {
+      const parsed = JSON.parse(text);
+      if (Array.isArray(parsed) && parsed.length > 0 && parsed[0]?.tipo) {
+        return parsed;
+      }
+    } catch (e) {}
+  }
+
+  const rawBlocks = text.split(/\n\n+/);
+  const blocos: ArtigoBlocoSimples[] = [];
+
+  for (const rawBlock of rawBlocks) {
+    const trimmed = rawBlock.trim();
+    if (!trimmed) continue;
+
+    if (trimmed.startsWith('###') || trimmed.startsWith('##') || trimmed.startsWith('#')) {
+      blocos.push({
+        tipo: 'subtitulo',
+        texto: trimmed.replace(/^#+\s*/, '').trim(),
+      });
+    } else if (trimmed.startsWith('>')) {
+      blocos.push({
+        tipo: 'citacao',
+        texto: trimmed.replace(/^>\s*/, '').trim(),
+      });
+    } else if (
+      trimmed.split('\n').every((line) => line.trim().startsWith('- ') || line.trim().startsWith('* ') || /^\d+\.\s/.test(line.trim()))
+    ) {
+      const itens = trimmed
+        .split('\n')
+        .map((line) => line.replace(/^([-*]|\d+\.)\s*/, '').trim())
+        .filter(Boolean);
+      blocos.push({
+        tipo: 'lista',
+        itens,
+      });
+    } else {
+      blocos.push({
+        tipo: 'paragrafo',
+        texto: trimmed,
+      });
+    }
+  }
+
+  return blocos;
+}
+
+export const MarkdownContentInput: React.FC<{ source: string; label?: string }> = ({ source, label = 'Corpo do Conteúdo (Markdown)' }) => {
+  const {
+    field: { value, onChange },
+    fieldState: { error },
+  } = useInput({ source });
+
+  const [activeTab, setActiveTab] = React.useState<'edit' | 'preview'>('edit');
+  const textValue = typeof value === 'string' ? value : (value ? JSON.stringify(value) : '');
+
+  const insertSnippet = (snippet: string) => {
+    const newVal = textValue ? `${textValue}\n\n${snippet}` : snippet;
+    onChange(newVal);
+  };
+
+  const parsedBlocos = parseMarkdownPreview(textValue);
+
+  return (
+    <div style={{ width: '100%', marginBottom: 24, fontFamily: 'sans-serif' }}>
+      <label style={{ display: 'block', fontWeight: 600, fontSize: '0.9rem', marginBottom: 8, color: '#e0e0e0' }}>
+        {label}
+      </label>
+
+      {/* Bar de Ferramentas & Abas */}
+      <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: 8, padding: '10px 14px', background: '#1e1e2d', border: '1px solid #323248', borderRadius: '8px 8px 0 0' }}>
+        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
+          <span style={{ fontSize: '0.75rem', color: '#888', marginRight: 4 }}>Inserir:</span>
+          <button
+            type="button"
+            onClick={() => insertSnippet('## Visibilidade antes de controle')}
+            style={{ padding: '4px 10px', fontSize: '0.78rem', background: '#2b2b40', color: '#7aa9ff', border: '1px solid #3f3f5c', borderRadius: 4, cursor: 'pointer' }}
+          >
+            + Subtítulo (##)
+          </button>
+          <button
+            type="button"
+            onClick={() => insertSnippet('- Item de auditoria 1\n- Item de auditoria 2\n- Item de auditoria 3')}
+            style={{ padding: '4px 10px', fontSize: '0.78rem', background: '#2b2b40', color: '#7aa9ff', border: '1px solid #3f3f5c', borderRadius: 4, cursor: 'pointer' }}
+          >
+            + Lista (-)
+          </button>
+          <button
+            type="button"
+            onClick={() => insertSnippet('> Conformidade não é um projeto com data de término — é um processo contínuo.')}
+            style={{ padding: '4px 10px', fontSize: '0.78rem', background: '#2b2b40', color: '#7aa9ff', border: '1px solid #3f3f5c', borderRadius: 4, cursor: 'pointer' }}
+          >
+            + Citação (&gt;)
+          </button>
+        </div>
+
+        <div style={{ display: 'flex', background: '#151521', borderRadius: 6, padding: 3, marginLeft: 'auto' }}>
+          <button
+            type="button"
+            onClick={() => setActiveTab('edit')}
+            style={{
+              padding: '5px 14px',
+              fontSize: '0.78rem',
+              fontWeight: 600,
+              border: 0,
+              borderRadius: 4,
+              cursor: 'pointer',
+              background: activeTab === 'edit' ? '#0E66FF' : 'transparent',
+              color: activeTab === 'edit' ? '#fff' : '#888',
+            }}
+          >
+            ✏️ Escrever (Markdown)
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab('preview')}
+            style={{
+              padding: '5px 14px',
+              fontSize: '0.78rem',
+              fontWeight: 600,
+              border: 0,
+              borderRadius: 4,
+              cursor: 'pointer',
+              background: activeTab === 'preview' ? '#0E66FF' : 'transparent',
+              color: activeTab === 'preview' ? '#fff' : '#888',
+            }}
+          >
+            👁️ Pré-visualizar Artigo
+          </button>
+        </div>
+      </div>
+
+      {/* Editor / Preview Area */}
+      {activeTab === 'edit' ? (
+        <textarea
+          value={textValue}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder={`Escreva o artigo em Markdown simples...\n\nProteger dados sensíveis deixou de ser uma preocupação restrita ao time de segurança.\n\n## Visibilidade antes de controle\nNão se protege o que não se enxerga...\n\n- Auditoria independente do DBA\n- Alertas em tempo real\n\n> Conformidade é um processo contínuo.`}
+          style={{
+            width: '100%',
+            minHeight: '420px',
+            padding: '16px',
+            fontSize: '0.95rem',
+            lineHeight: '1.6',
+            fontFamily: 'Consolas, Monaco, "Fira Code", monospace',
+            background: '#151521',
+            color: '#f0f0f5',
+            border: '1px solid #323248',
+            borderTop: 0,
+            borderRadius: '0 0 8px 8px',
+            resize: 'vertical',
+            outline: 'none',
+            boxSizing: 'border-box',
+          }}
+        />
+      ) : (
+        <div style={{
+          width: '100%',
+          minHeight: '420px',
+          padding: '24px',
+          background: '#ffffff',
+          color: '#0F172A',
+          border: '1px solid #e0e0e0',
+          borderTop: 0,
+          borderRadius: '0 0 8px 8px',
+          boxSizing: 'border-box',
+          overflowY: 'auto',
+        }}>
+          <div style={{ fontSize: '0.75rem', fontWeight: 700, color: '#0E66FF', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 20 }}>
+            PRÉ-VISUALIZAÇÃO EM TEMPO REAL NO BLOG
+          </div>
+          {parsedBlocos.length === 0 ? (
+            <p style={{ color: '#94a3b8', fontStyle: 'italic' }}>Nenhum texto informado. Alterne para "Escrever (Markdown)" para digitar.</p>
+          ) : (
+            parsedBlocos.map((bloco, idx) => {
+              if (bloco.tipo === 'subtitulo') {
+                return <h2 key={idx} style={{ marginTop: 28, marginBottom: 12, fontSize: '1.4rem', fontWeight: 700, color: '#0F172A' }}>{bloco.texto}</h2>;
+              }
+              if (bloco.tipo === 'citacao') {
+                return <blockquote key={idx} style={{ borderLeft: '3px solid #0E66FF', paddingLeft: 16, margin: '24px 0', fontSize: '1.1rem', fontWeight: 500, fontStyle: 'italic', color: '#1E293B' }}>{bloco.texto}</blockquote>;
+              }
+              if (bloco.tipo === 'lista') {
+                return (
+                  <ul key={idx} style={{ paddingLeft: 24, margin: '16px 0', lineHeight: 1.7, color: '#334155' }}>
+                    {bloco.itens.map((item, i) => (
+                      <li key={i} style={{ marginBottom: 6 }}>{item}</li>
+                    ))}
+                  </ul>
+                );
+              }
+              return <p key={idx} style={{ marginBottom: 16, lineHeight: 1.7, color: '#334155', fontSize: '1.02rem' }}>{bloco.texto}</p>;
+            })
+          )}
+        </div>
+      )}
+
+      {/* Dicas de sintaxe */}
+      <div style={{ marginTop: 8, fontSize: '0.8rem', color: '#94a3b8', display: 'flex', gap: 16, flexWrap: 'wrap' }}>
+        <span>💡 <code>## Subtítulo</code> para subtítulos</span>
+        <span>💡 <code>- Item</code> para listas</span>
+        <span>💡 <code>&gt; Citação</code> para frases destacadas</span>
+        <span>💡 Linha em branco separa parágrafos</span>
+      </div>
+
+      {error && <span style={{ color: '#f87171', fontSize: '0.8rem', marginTop: 4, display: 'block' }}>{error.message}</span>}
+    </div>
+  );
+};
 
 const MediaAndLinkFields = () => {
   const tipo = useWatch({ name: 'tipo' });
@@ -133,7 +353,7 @@ export const ConteudoEdit = () => (
       <TextInput source="autor" label="Autor (Ex: Equipe Infodive)" />
       <TextInput source="tempoLeitura" label="Tempo de Leitura (Ex: 5 min de leitura)" />
       
-      <TextInput source="conteudo" label="Corpo do Conteúdo (Markdown / Rich Text)" multiline fullWidth />
+      <MarkdownContentInput source="conteudo" label="Corpo do Conteúdo (Markdown com Pré-visualização)" />
 
       <DateInput source="publicadoEm" label="Data de Publicação" />
       
@@ -174,7 +394,7 @@ export const ConteudoCreate = () => (
       <TextInput source="autor" defaultValue="Equipe Infodive" label="Autor" />
       <TextInput source="tempoLeitura" label="Tempo de Leitura" />
       
-      <TextInput source="conteudo" label="Corpo do Conteúdo (Markdown / Rich Text)" multiline fullWidth />
+      <MarkdownContentInput source="conteudo" label="Corpo do Conteúdo (Markdown com Pré-visualização)" />
 
       <DateInput source="publicadoEm" label="Data de Publicação" defaultValue={new Date()} />
       
