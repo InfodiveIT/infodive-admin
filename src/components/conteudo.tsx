@@ -55,56 +55,112 @@ function getYouTubeEmbedUrl(url?: string): string | null {
 
 type ArtigoBlocoSimples =
   | { tipo: 'paragrafo'; texto: string }
-  | { tipo: 'subtitulo'; texto: string }
-  | { tipo: 'lista'; itens: string[] }
-  | { tipo: 'citacao'; texto: string };
+  | { tipo: 'subtitulo'; texto: string; nivel: number }
+  | { tipo: 'lista'; itens: string[]; ordenada: boolean }
+  | { tipo: 'citacao'; texto: string }
+  | { tipo: 'divisor' }
+  | { tipo: 'tabela'; headers: string[]; rows: string[][] };
+
+function parseInlineAdmin(text: string): React.ReactNode[] {
+  if (!text) return [];
+  const regex = /(\*\*[^*]+\*\*|\*[^*]+\*|`[^`]+`|\[[^\]]+\]\([^)]+\))/g;
+  const parts = text.split(regex);
+  return parts.map((part, index) => {
+    if (!part) return null;
+    if (part.startsWith('**') && part.endsWith('**') && part.length >= 4) {
+      return <strong key={index} style={{ fontWeight: 700, color: '#0F172A' }}>{parseInlineAdmin(part.slice(2, -2))}</strong>;
+    }
+    if (part.startsWith('*') && part.endsWith('*') && part.length >= 2) {
+      return <em key={index}>{parseInlineAdmin(part.slice(1, -1))}</em>;
+    }
+    if (part.startsWith('`') && part.endsWith('`') && part.length >= 2) {
+      return <code key={index} style={{ background: '#f1f5f9', padding: '2px 6px', borderRadius: 4, fontFamily: 'monospace', color: '#0E66FF', fontSize: '0.85em' }}>{part.slice(1, -1)}</code>;
+    }
+    const linkMatch = part.match(/^\[([^\]]+)\]\(([^)]+)\)$/);
+    if (linkMatch) {
+      return <a key={index} href={linkMatch[2]} target="_blank" rel="noopener noreferrer" style={{ color: '#0E66FF', textDecoration: 'underline' }}>{linkMatch[1]}</a>;
+    }
+    return part;
+  });
+}
 
 function parseMarkdownPreview(text?: string): ArtigoBlocoSimples[] {
   if (!text || !text.trim()) return [];
 
-  if (text.trim().startsWith('[')) {
-    try {
-      const parsed = JSON.parse(text);
-      if (Array.isArray(parsed) && parsed.length > 0 && parsed[0]?.tipo) {
-        return parsed;
-      }
-    } catch (e) {}
-  }
-
-  const rawBlocks = text.split(/\n\n+/);
+  const rawBlocks = text.split(/\n\s*\n/);
   const blocos: ArtigoBlocoSimples[] = [];
 
   for (const rawBlock of rawBlocks) {
     const trimmed = rawBlock.trim();
     if (!trimmed) continue;
 
-    if (trimmed.startsWith('###') || trimmed.startsWith('##') || trimmed.startsWith('#')) {
-      blocos.push({
-        tipo: 'subtitulo',
-        texto: trimmed.replace(/^#+\s*/, '').trim(),
-      });
-    } else if (trimmed.startsWith('>')) {
+    // Divisor ---
+    if (trimmed === '---' || trimmed === '***' || trimmed === '___') {
+      blocos.push({ tipo: 'divisor' });
+      continue;
+    }
+
+    // Título # / ## / ###
+    if (trimmed.startsWith('#')) {
+      const match = trimmed.match(/^(#+)\s*(.*)/);
+      if (match) {
+        const nivel = Math.min(match[1].length, 4);
+        blocos.push({ tipo: 'subtitulo', texto: match[2].trim(), nivel });
+        continue;
+      }
+    }
+
+    // Citação >
+    if (trimmed.startsWith('>')) {
       blocos.push({
         tipo: 'citacao',
-        texto: trimmed.replace(/^>\s*/, '').trim(),
+        texto: trimmed.replace(/^>\s*/gm, '').trim(),
       });
-    } else if (
-      trimmed.split('\n').every((line) => line.trim().startsWith('- ') || line.trim().startsWith('* ') || /^\d+\.\s/.test(line.trim()))
-    ) {
-      const itens = trimmed
-        .split('\n')
-        .map((line) => line.replace(/^([-*]|\d+\.)\s*/, '').trim())
-        .filter(Boolean);
+      continue;
+    }
+
+    // Tabela |
+    if (trimmed.includes('|') && trimmed.split('\n').some(l => l.includes('|'))) {
+      const lines = trimmed.split('\n').map(l => l.trim()).filter(Boolean);
+      const tableLines = lines.filter(l => !/^\|?\s*:?-+:?\s*(?:\|\s*:?-+:?\s*)*\|?$/.test(l));
+      if (tableLines.length > 0) {
+        const rows = tableLines.map(line => line.replace(/^\|/, '').replace(/\|$/, '').split('|').map(c => c.trim()));
+        blocos.push({
+          tipo: 'tabela',
+          headers: rows[0],
+          rows: rows.slice(1),
+        });
+        continue;
+      }
+    }
+
+    // Listas
+    const lines = trimmed.split('\n');
+    const isUnordered = lines.every(l => l.trim().startsWith('- ') || l.trim().startsWith('* '));
+    if (isUnordered) {
       blocos.push({
         tipo: 'lista',
-        itens,
+        ordenada: false,
+        itens: lines.map(l => l.trim().replace(/^[-*]\s+/, '')),
       });
-    } else {
-      blocos.push({
-        tipo: 'paragrafo',
-        texto: trimmed,
-      });
+      continue;
     }
+
+    const isOrdered = lines.every(l => /^\d+\.\s+/.test(l.trim()));
+    if (isOrdered) {
+      blocos.push({
+        tipo: 'lista',
+        ordenada: true,
+        itens: lines.map(l => l.trim().replace(/^\d+\.\s+/, '')),
+      });
+      continue;
+    }
+
+    // Parágrafo
+    blocos.push({
+      tipo: 'paragrafo',
+      texto: trimmed,
+    });
   }
 
   return blocos;
@@ -239,21 +295,72 @@ export const MarkdownContentInput: React.FC<{ source: string; label?: string }> 
           ) : (
             parsedBlocos.map((bloco, idx) => {
               if (bloco.tipo === 'subtitulo') {
-                return <h2 key={idx} style={{ marginTop: 28, marginBottom: 12, fontSize: '1.4rem', fontWeight: 700, color: '#0F172A' }}>{bloco.texto}</h2>;
-              }
-              if (bloco.tipo === 'citacao') {
-                return <blockquote key={idx} style={{ borderLeft: '3px solid #0E66FF', paddingLeft: 16, margin: '24px 0', fontSize: '1.1rem', fontWeight: 500, fontStyle: 'italic', color: '#1E293B' }}>{bloco.texto}</blockquote>;
-              }
-              if (bloco.tipo === 'lista') {
                 return (
-                  <ul key={idx} style={{ paddingLeft: 24, margin: '16px 0', lineHeight: 1.7, color: '#334155' }}>
-                    {bloco.itens.map((item, i) => (
-                      <li key={i} style={{ marginBottom: 6 }}>{item}</li>
-                    ))}
-                  </ul>
+                  <h2 key={idx} style={{ marginTop: 28, marginBottom: 12, fontSize: bloco.nivel === 1 ? '1.8rem' : bloco.nivel === 2 ? '1.4rem' : '1.2rem', fontWeight: 700, color: '#0F172A', borderBottom: bloco.nivel === 2 ? '1px solid #e2e8f0' : 'none', paddingBottom: 6 }}>
+                    {parseInlineAdmin(bloco.texto)}
+                  </h2>
                 );
               }
-              return <p key={idx} style={{ marginBottom: 16, lineHeight: 1.7, color: '#334155', fontSize: '1.02rem' }}>{bloco.texto}</p>;
+              if (bloco.tipo === 'divisor') {
+                return <hr key={idx} style={{ margin: '32px 0', border: 0, borderTop: '1px solid #cbd5e1' }} />;
+              }
+              if (bloco.tipo === 'citacao') {
+                return (
+                  <blockquote key={idx} style={{ borderLeft: '4px solid #0E66FF', background: '#f8fafc', padding: '16px 20px', borderRadius: '0 8px 8px 0', margin: '24px 0', fontSize: '1.05rem', fontWeight: 500, fontStyle: 'italic', color: '#1E293B' }}>
+                    {parseInlineAdmin(bloco.texto)}
+                  </blockquote>
+                );
+              }
+              if (bloco.tipo === 'tabela') {
+                return (
+                  <div key={idx} style={{ margin: '24px 0', overflowX: 'auto', borderRadius: 8, border: '1px solid #cbd5e1' }}>
+                    <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.9rem' }}>
+                      <thead style={{ background: '#f1f5f9' }}>
+                        <tr>
+                          {bloco.headers.map((h, i) => (
+                            <th key={i} style={{ padding: '10px 14px', fontWeight: 700, borderBottom: '1px solid #cbd5e1', borderRight: '1px solid #cbd5e1', color: '#0F172A' }}>
+                              {parseInlineAdmin(h)}
+                            </th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {bloco.rows.map((row, rIdx) => (
+                          <tr key={rIdx} style={{ borderBottom: '1px solid #e2e8f0' }}>
+                            {row.map((cell, cIdx) => (
+                              <td key={cIdx} style={{ padding: '10px 14px', borderRight: '1px solid #e2e8f0', color: '#334155' }}>
+                                {parseInlineAdmin(cell)}
+                              </td>
+                            ))}
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                );
+              }
+              if (bloco.tipo === 'lista') {
+                const ListTag = bloco.ordenada ? 'ol' : 'ul';
+                return (
+                  <ListTag key={idx} style={{ paddingLeft: 24, margin: '16px 0', lineHeight: 1.7, color: '#334155' }}>
+                    {bloco.itens.map((item, i) => (
+                      <li key={i} style={{ marginBottom: 6 }}>
+                        {parseInlineAdmin(item)}
+                      </li>
+                    ))}
+                  </ListTag>
+                );
+              }
+              return (
+                <p key={idx} style={{ marginBottom: 16, lineHeight: 1.7, color: '#334155', fontSize: '1.02rem' }}>
+                  {bloco.texto.split('\n').map((line, lIdx) => (
+                    <React.Fragment key={lIdx}>
+                      {parseInlineAdmin(line)}
+                      {lIdx < bloco.texto.split('\n').length - 1 && <br />}
+                    </React.Fragment>
+                  ))}
+                </p>
+              );
             })
           )}
         </div>
