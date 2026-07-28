@@ -1,4 +1,6 @@
 import React from 'react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import {
   List,
   Datagrid,
@@ -290,78 +292,46 @@ export const MarkdownContentInput: React.FC<{ source: string; label?: string }> 
           <div style={{ fontSize: '0.75rem', fontWeight: 700, color: '#0E66FF', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 20 }}>
             PRÉ-VISUALIZAÇÃO EM TEMPO REAL NO BLOG
           </div>
-          {parsedBlocos.length === 0 ? (
+          {!textValue ? (
             <p style={{ color: '#94a3b8', fontStyle: 'italic' }}>Nenhum texto informado. Alterne para "Escrever (Markdown)" para digitar.</p>
           ) : (
-            parsedBlocos.map((bloco, idx) => {
-              if (bloco.tipo === 'subtitulo') {
-                return (
-                  <h2 key={idx} style={{ marginTop: 28, marginBottom: 12, fontSize: bloco.nivel === 1 ? '1.8rem' : bloco.nivel === 2 ? '1.4rem' : '1.2rem', fontWeight: 700, color: '#0F172A', borderBottom: bloco.nivel === 2 ? '1px solid #e2e8f0' : 'none', paddingBottom: 6 }}>
-                    {parseInlineAdmin(bloco.texto)}
-                  </h2>
-                );
-              }
-              if (bloco.tipo === 'divisor') {
-                return <hr key={idx} style={{ margin: '32px 0', border: 0, borderTop: '1px solid #cbd5e1' }} />;
-              }
-              if (bloco.tipo === 'citacao') {
-                return (
-                  <blockquote key={idx} style={{ borderLeft: '4px solid #0E66FF', background: '#f8fafc', padding: '16px 20px', borderRadius: '0 8px 8px 0', margin: '24px 0', fontSize: '1.05rem', fontWeight: 500, fontStyle: 'italic', color: '#1E293B' }}>
-                    {parseInlineAdmin(bloco.texto)}
+            <ReactMarkdown
+              remarkPlugins={[remarkGfm]}
+              components={{
+                h1: ({ children }) => <h1 style={{ marginTop: 28, marginBottom: 12, fontSize: '1.8rem', fontWeight: 700, color: '#0F172A' }}>{children}</h1>,
+                h2: ({ children }) => <h2 style={{ marginTop: 28, marginBottom: 12, fontSize: '1.4rem', fontWeight: 700, color: '#0F172A', borderBottom: '1px solid #e2e8f0', paddingBottom: 6 }}>{children}</h2>,
+                h3: ({ children }) => <h3 style={{ marginTop: 24, marginBottom: 10, fontSize: '1.2rem', fontWeight: 600, color: '#0F172A' }}>{children}</h3>,
+                h4: ({ children }) => <h4 style={{ marginTop: 20, marginBottom: 8, fontSize: '1.05rem', fontWeight: 600, color: '#0F172A' }}>{children}</h4>,
+                p: ({ children }) => <p style={{ marginBottom: 16, lineHeight: 1.7, color: '#334155', fontSize: '1.02rem' }}>{children}</p>,
+                ul: ({ children }) => <ul style={{ paddingLeft: 24, margin: '16px 0', lineHeight: 1.7, color: '#334155' }}>{children}</ul>,
+                ol: ({ children }) => <ol style={{ paddingLeft: 24, margin: '16px 0', lineHeight: 1.7, color: '#334155' }}>{children}</ol>,
+                li: ({ children }) => <li style={{ marginBottom: 6 }}>{children}</li>,
+                blockquote: ({ children }) => (
+                  <blockquote style={{ borderLeft: '4px solid #0E66FF', background: '#f8fafc', padding: '16px 20px', borderRadius: '0 8px 8px 0', margin: '24px 0', fontSize: '1.05rem', fontWeight: 500, fontStyle: 'italic', color: '#1E293B' }}>
+                    {children}
                   </blockquote>
-                );
-              }
-              if (bloco.tipo === 'tabela') {
-                return (
-                  <div key={idx} style={{ margin: '24px 0', overflowX: 'auto', borderRadius: 8, border: '1px solid #cbd5e1' }}>
+                ),
+                hr: () => <hr style={{ margin: '32px 0', border: 0, borderTop: '1px solid #cbd5e1' }} />,
+                table: ({ children }) => (
+                  <div style={{ margin: '24px 0', overflowX: 'auto', borderRadius: 8, border: '1px solid #cbd5e1' }}>
                     <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.9rem' }}>
-                      <thead style={{ background: '#f1f5f9' }}>
-                        <tr>
-                          {bloco.headers.map((h, i) => (
-                            <th key={i} style={{ padding: '10px 14px', fontWeight: 700, borderBottom: '1px solid #cbd5e1', borderRight: '1px solid #cbd5e1', color: '#0F172A' }}>
-                              {parseInlineAdmin(h)}
-                            </th>
-                          ))}
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {bloco.rows.map((row, rIdx) => (
-                          <tr key={rIdx} style={{ borderBottom: '1px solid #e2e8f0' }}>
-                            {row.map((cell, cIdx) => (
-                              <td key={cIdx} style={{ padding: '10px 14px', borderRight: '1px solid #e2e8f0', color: '#334155' }}>
-                                {parseInlineAdmin(cell)}
-                              </td>
-                            ))}
-                          </tr>
-                        ))}
-                      </tbody>
+                      {children}
                     </table>
                   </div>
-                );
-              }
-              if (bloco.tipo === 'lista') {
-                const ListTag = bloco.ordenada ? 'ol' : 'ul';
-                return (
-                  <ListTag key={idx} style={{ paddingLeft: 24, margin: '16px 0', lineHeight: 1.7, color: '#334155' }}>
-                    {bloco.itens.map((item, i) => (
-                      <li key={i} style={{ marginBottom: 6 }}>
-                        {parseInlineAdmin(item)}
-                      </li>
-                    ))}
-                  </ListTag>
-                );
-              }
-              return (
-                <p key={idx} style={{ marginBottom: 16, lineHeight: 1.7, color: '#334155', fontSize: '1.02rem' }}>
-                  {bloco.texto.split('\n').map((line, lIdx) => (
-                    <React.Fragment key={lIdx}>
-                      {parseInlineAdmin(line)}
-                      {lIdx < bloco.texto.split('\n').length - 1 && <br />}
-                    </React.Fragment>
-                  ))}
-                </p>
-              );
-            })
+                ),
+                thead: ({ children }) => <thead style={{ background: '#f1f5f9' }}>{children}</thead>,
+                tbody: ({ children }) => <tbody>{children}</tbody>,
+                tr: ({ children }) => <tr style={{ borderBottom: '1px solid #e2e8f0' }}>{children}</tr>,
+                th: ({ children }) => <th style={{ padding: '10px 14px', fontWeight: 700, borderBottom: '1px solid #cbd5e1', borderRight: '1px solid #cbd5e1', color: '#0F172A' }}>{children}</th>,
+                td: ({ children }) => <td style={{ padding: '10px 14px', borderRight: '1px solid #e2e8f0', color: '#334155' }}>{children}</td>,
+                strong: ({ children }) => <strong style={{ fontWeight: 700, color: '#0F172A' }}>{children}</strong>,
+                em: ({ children }) => <em style={{ fontStyle: 'italic' }}>{children}</em>,
+                code: ({ children }) => <code style={{ background: '#f1f5f9', padding: '2px 6px', borderRadius: 4, fontFamily: 'monospace', color: '#0E66FF', fontSize: '0.85em' }}>{children}</code>,
+                a: ({ href, children }) => <a href={href} target="_blank" rel="noopener noreferrer" style={{ color: '#0E66FF', textDecoration: 'underline' }}>{children}</a>,
+              }}
+            >
+              {textValue}
+            </ReactMarkdown>
           )}
         </div>
       )}
