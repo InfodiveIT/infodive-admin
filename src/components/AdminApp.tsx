@@ -172,6 +172,7 @@ import TimelineIcon from '@mui/icons-material/Timeline';
 import CameraAltIcon from '@mui/icons-material/CameraAlt';
 import PeopleIcon from '@mui/icons-material/People';
 import SupervisorAccountIcon from '@mui/icons-material/SupervisorAccount';
+import GavelIcon from '@mui/icons-material/Gavel';
 
 // Custom Views
 import {
@@ -257,6 +258,8 @@ import {
   AdminAutorizadoCreate,
 } from './admins';
 
+import { PoliticaList, PoliticaEdit } from './politicas';
+
 // Custom collapsible sidebar menu
 const MyMenu = () => {
   const [openGroups, setOpenGroups] = React.useState<Record<string, boolean>>({
@@ -276,6 +279,7 @@ const MyMenu = () => {
     paginasSobre: false,
     config: false,
     admins: false,
+    politicas: false,
   });
 
   const toggleGroup = (group: string) => {
@@ -527,6 +531,18 @@ const MyMenu = () => {
         <List component="div" disablePadding sx={{ pl: 1 }}>
           <Menu.Item to="/leads" primaryText="Leads Recebidos" leftIcon={<PeopleIcon />} />
           <Menu.Item to="/logs-auditoria" primaryText="Logs de Auditoria" leftIcon={<HistoryIcon />} />
+        </List>
+      </Collapse>
+
+      {/* 10. Políticas do Site */}
+      <ListItemButton onClick={() => toggleGroup('politicas')} sx={{ borderRadius: '8px', margin: '4px 8px' }}>
+        <ListItemIcon sx={{ minWidth: 40 }}><GavelIcon /></ListItemIcon>
+        <ListItemText primary="Políticas do Site" />
+        {openGroups.politicas ? <ExpandMore /> : <ChevronRight />}
+      </ListItemButton>
+      <Collapse in={openGroups.politicas} timeout="auto" unmountOnExit>
+        <List component="div" disablePadding sx={{ pl: 1 }}>
+          <Menu.Item to="/politicas" primaryText="Todas as Políticas" leftIcon={<GavelIcon />} />
         </List>
       </Collapse>
     </Menu>
@@ -796,6 +812,15 @@ export default function AdminApp() {
         options={{ label: 'Logs de Auditoria' }}
         list={withAdminGuard(LogAuditoriaList)}
         icon={HistoryIcon}
+      />
+
+      {/* ─── 10. POLÍTICAS ──────────────────────────────────────────────────── */}
+      <Resource
+        name="politicas"
+        options={{ label: 'Políticas' }}
+        list={withAdminGuard(PoliticaList)}
+        edit={withAdminGuard(PoliticaEdit)}
+        icon={GavelIcon}
       />
     </Admin>
   );
