@@ -252,6 +252,8 @@ import {
   LeadShow,
 } from './leads';
 
+import KeyIcon from '@mui/icons-material/Key';
+import { ParceiroTokenList } from './tokens-agencia';
 import {
   AdminAutorizadoList,
   AdminAutorizadoEdit,
@@ -531,6 +533,7 @@ const MyMenu = () => {
         <List component="div" disablePadding sx={{ pl: 1 }}>
           <Menu.Item to="/leads" primaryText="Leads Recebidos" leftIcon={<PeopleIcon />} />
           <Menu.Item to="/logs-auditoria" primaryText="Logs de Auditoria" leftIcon={<HistoryIcon />} />
+          <Menu.Item to="/tokens-agencia" primaryText="Tokens de Agências" leftIcon={<KeyIcon />} />
         </List>
       </Collapse>
 
@@ -821,6 +824,14 @@ export default function AdminApp() {
         list={withAdminGuard(PoliticaList)}
         edit={withAdminGuard(PoliticaEdit)}
         icon={GavelIcon}
+      />
+
+      {/* ─── 11. TOKENS DE AGÊNCIAS ─────────────────────────────────────────── */}
+      <Resource
+        name="tokens-agencia"
+        options={{ label: 'Tokens de Agências' }}
+        list={withAdminGuard(ParceiroTokenList)}
+        icon={KeyIcon}
       />
     </Admin>
   );
