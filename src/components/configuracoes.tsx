@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Edit,
   SimpleForm,
@@ -6,8 +6,64 @@ import {
   ArrayInput,
   SimpleFormIterator,
   required,
+  useNotify,
+  useRefresh,
+  Button,
 } from 'react-admin';
+import SyncIcon from '@mui/icons-material/Sync';
 import { AdminHelpBanner } from './AdminHelpBanner';
+
+const SyncSocialPostsButton = () => {
+  const notify = useNotify();
+  const refresh = useRefresh();
+  const [loading, setLoading] = useState(false);
+
+  const handleSync = async () => {
+    setLoading(true);
+    try {
+      const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api/v1';
+      const res = await fetch(`${apiUrl}/social-posts/sync`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+      });
+
+      if (!res.ok) {
+        throw new Error(`HTTP ${res.status}: Erro ao comunicar com o servidor.`);
+      }
+
+      const data = await res.json();
+      notify(`Sucesso: ${data.message} (${data.totalSynced || 0} posts sincronizados)`, { type: 'success' });
+      refresh();
+    } catch (err: any) {
+      notify(`Erro ao sincronizar: ${err.message}`, { type: 'error' });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div style={{ marginTop: 16, marginBottom: 24, padding: 16, border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, backgroundColor: 'rgba(255,255,255,0.02)' }}>
+      <h4 style={{ margin: 0, marginBottom: 8, color: '#38bdf8', fontWeight: 600 }}>
+        🔄 Sincronização Manual com Redes Sociais
+      </h4>
+      <p style={{ fontSize: 13, color: '#94a3b8', marginBottom: 12 }}>
+        Clique no botão abaixo para disparar imediatamente a busca dos posts mais recentes nas contas oficiais do Instagram e LinkedIn.
+      </p>
+      <Button
+        label={loading ? 'Sincronizando...' : 'Sincronizar Redes Sociais Agora'}
+        onClick={handleSync}
+        disabled={loading}
+        variant="contained"
+        color="primary"
+        startIcon={<SyncIcon />}
+      />
+    </div>
+  );
+};
 
 // ─── CONFIGURAÇÕES DE FOOTER ─────────────────────────────────────────────────
 export const ConfigFooterEdit = () => (
@@ -21,7 +77,7 @@ export const ConfigFooterEdit = () => (
       <TextInput source="descricaoEmpresa" label="Descrição da Empresa no Rodapé" multiline fullWidth />
       <TextInput source="badgeNoc" label="Texto do Selo NOC 24/7" fullWidth />
       <TextInput source="badgeCloud" label="Texto do Selo Cloud Integrada" fullWidth />
-      
+
       <TextInput source="urlLinkedin" label="Link do LinkedIn" fullWidth />
       <TextInput source="urlInstagram" label="Link do Instagram" fullWidth />
       <TextInput source="urlFacebook" label="Link do Facebook" fullWidth />
@@ -35,17 +91,50 @@ export const ConfigBlogEdit = () => (
     <SimpleForm>
       <AdminHelpBanner
         title="O que esta tela altera no site?"
-        description={<>Altera os títulos institucionais, cabeçalhos e links sociais exibidos na página do <strong>Blog (<code>/blog</code>)</strong>.</>}
+        description={<>Altera os títulos institucionais, cabeçalhos, links sociais e tokens de API exibidos na página do <strong>Blog (<code>/blog</code>)</strong>.</>}
       />
       <TextInput source="artigosEyebrow" label="Blog - Eyebrow dos Artigos" fullWidth />
       <TextInput source="artigosHeadline" label="Blog - Headline dos Artigos" fullWidth />
-      
+
       <TextInput source="socialEyebrow" label="Redes Sociais - Eyebrow" fullWidth />
       <TextInput source="socialHeadline" label="Redes Sociais - Headline" fullWidth />
       <TextInput source="socialDescricao" label="Redes Sociais - Descrição" multiline fullWidth />
-      
+
       <TextInput source="urlInstagram" label="Link Oficial do Instagram" fullWidth />
       <TextInput source="urlLinkedin" label="Link Oficial do LinkedIn" fullWidth />
+
+      <h3 style={{ marginTop: 32, marginBottom: 8, color: '#a855f7', fontWeight: 600 }}>
+        🔑 Tokens de API para Busca Automática (Instagram & LinkedIn)
+      </h3>
+      <TextInput
+        source="instagramAccessToken"
+        label="Instagram Graph API - Access Token de Longa Duração"
+        helperText="Obtenha no Meta for Developers. Token com permissão instagram_basic e instagram_manage_insights"
+        multiline
+        fullWidth
+      />
+      <TextInput
+        source="instagramAccountId"
+        label="Instagram Business Account ID"
+        helperText="ID da conta profissional do Instagram conectada à Página da empresa"
+        fullWidth
+      />
+
+      <TextInput
+        source="linkedinAccessToken"
+        label="LinkedIn API - Access Token (OAuth 2.0)"
+        helperText="Token de acesso concedido pela Organização no LinkedIn Developer Portal"
+        multiline
+        fullWidth
+      />
+      <TextInput
+        source="linkedinOrganizationId"
+        label="LinkedIn Organization ID"
+        helperText="ID numérico ou URN da organização no LinkedIn (ex: urn:li:organization:12345678)"
+        fullWidth
+      />
+
+      <SyncSocialPostsButton />
     </SimpleForm>
   </Edit>
 );
