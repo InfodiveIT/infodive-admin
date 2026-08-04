@@ -5,6 +5,7 @@ import {
   TextField,
   DateField,
   FunctionField,
+  TopToolbar,
   useRefresh,
   useNotify,
 } from 'react-admin';
@@ -40,6 +41,49 @@ const getTokenHeader = () => {
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
   };
 };
+
+const ListActions = ({ onOpenCreate }: { onOpenCreate: () => void }) => (
+  <TopToolbar>
+    <Button
+      variant="contained"
+      color="primary"
+      startIcon={<AddIcon />}
+      onClick={onOpenCreate}
+      sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 600 }}
+    >
+      Gerar Novo Token de Acesso
+    </Button>
+  </TopToolbar>
+);
+
+const ParceiroTokenEmpty = ({ onOpenCreate }: { onOpenCreate: () => void }) => (
+  <Box
+    display="flex"
+    flexDirection="column"
+    alignItems="center"
+    justifyContent="center"
+    py={8}
+    px={2}
+    textAlign="center"
+  >
+    <KeyIcon sx={{ fontSize: 64, color: 'primary.main', mb: 2, opacity: 0.8 }} />
+    <Typography variant="h6" fontWeight={700} gutterBottom>
+      Nenhum token de agência gerado ainda
+    </Typography>
+    <Typography variant="body2" color="text.secondary" sx={{ maxWidth: 450, mb: 3 }}>
+      Gere chaves de API com prazo de expiração para parceiros e agências de marketing criarem e gerenciarem os conteúdos do blog com segurança.
+    </Typography>
+    <Button
+      variant="contained"
+      color="primary"
+      startIcon={<AddIcon />}
+      onClick={onOpenCreate}
+      sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 600, px: 3, py: 1.2 }}
+    >
+      Gerar Primeiro Token de Acesso
+    </Button>
+  </Box>
+);
 
 export const ParceiroTokenList = () => {
   const [openCreate, setOpenCreate] = useState(false);
@@ -153,6 +197,8 @@ export const ParceiroTokenList = () => {
     <>
       <List
         title="Gestão de Tokens & Acessos de Agência"
+        actions={<ListActions onOpenCreate={() => setOpenCreate(true)} />}
+        empty={<ParceiroTokenEmpty onOpenCreate={() => setOpenCreate(true)} />}
         aside={
           <AdminHelpAside
             title="Acessos de Agências e Parceiros"
@@ -164,19 +210,6 @@ export const ParceiroTokenList = () => {
               </>
             }
           />
-        }
-        actions={
-          <Box display="flex" gap={2} my={1}>
-            <Button
-              variant="contained"
-              color="primary"
-              startIcon={<AddIcon />}
-              onClick={() => setOpenCreate(true)}
-              sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 600 }}
-            >
-              Gerar Novo Token de Acesso
-            </Button>
-          </Box>
         }
       >
         <Datagrid rowClick={false}>
