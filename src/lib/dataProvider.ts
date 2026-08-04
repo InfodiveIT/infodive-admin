@@ -157,12 +157,13 @@ export const dataProvider: DataProvider = {
     
     getOne: async (resource, params) => {
         const isSingleton = [
-            'config-footer', 'config-blog', 'contato-info',
+            'config-footer', 'config-blog', 'config-social', 'contato-info',
             'servicos-etapas', 'servicos-metodologia',
             'sobre-numeros', 'sobre-timeline', 'sobre-valores', 'sobre-cultura'
         ].includes(resource);
         
-        const url = isSingleton ? `${apiUrl}/${resource}` : `${apiUrl}/${resource}/${params.id}`;
+        const targetEndpoint = resource === 'config-social' ? 'config-blog' : resource;
+        const url = isSingleton ? `${apiUrl}/${targetEndpoint}` : `${apiUrl}/${resource}/${params.id}`;
         const { json } = await httpClient(url);
         
         if (isSingleton) {
@@ -198,12 +199,13 @@ export const dataProvider: DataProvider = {
     
     update: async (resource, params) => {
         const isSingleton = [
-            'config-footer', 'config-blog', 'contato-info',
+            'config-footer', 'config-blog', 'config-social', 'contato-info',
             'servicos-etapas', 'servicos-metodologia',
             'sobre-numeros', 'sobre-timeline', 'sobre-valores', 'sobre-cultura'
         ].includes(resource);
         
-        const url = isSingleton ? `${apiUrl}/${resource}` : `${apiUrl}/${resource}/${params.id}`;
+        const targetEndpoint = resource === 'config-social' ? 'config-blog' : resource;
+        const url = isSingleton ? `${apiUrl}/${targetEndpoint}` : `${apiUrl}/${resource}/${params.id}`;
         
         // Upload de arquivos se existirem novos arquivos selecionados no formulário
         const processedData = await checkAndUploadFiles(params.data);

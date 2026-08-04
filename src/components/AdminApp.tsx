@@ -232,6 +232,7 @@ import {
 import {
   ConfigFooterEdit,
   ConfigBlogEdit,
+  ConfigSocialTokensEdit,
   ContatoInfoEdit,
 } from './configuracoes';
 
@@ -520,6 +521,7 @@ const MyMenu = () => {
         <List component="div" disablePadding sx={{ pl: 1 }}>
           <Menu.Item to="/config-footer" primaryText="Footer / Rodapé" leftIcon={<SettingsIcon />} />
           <Menu.Item to="/contato-info" primaryText="Informações de Contato" leftIcon={<ContactPhoneIcon />} />
+          <Menu.Item to="/config-social/singleton" primaryText="Tokens Redes Sociais (API)" leftIcon={<KeyIcon />} />
         </List>
       </Collapse>
 
@@ -745,6 +747,13 @@ export default function AdminApp() {
         list={() => <SingletonRedirect to="/config-blog/singleton" />}
         edit={ConfigBlogEdit}
         icon={SettingsIcon}
+      />
+      <Resource
+        name="config-social"
+        options={{ label: 'Config - Tokens Redes Sociais' }}
+        list={withAdminGuard(() => <SingletonRedirect to="/config-social/singleton" />)}
+        edit={withAdminGuard(ConfigSocialTokensEdit)}
+        icon={KeyIcon}
       />
       <Resource
         name="contato-info"

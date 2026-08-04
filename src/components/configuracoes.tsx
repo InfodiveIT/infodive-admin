@@ -22,7 +22,7 @@ const SyncSocialPostsButton = () => {
     setLoading(true);
     try {
       const token = localStorage.getItem('token') || sessionStorage.getItem('token');
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api/v1';
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://infodiveit-backend-production.up.railway.app/api/v1';
       const res = await fetch(`${apiUrl}/social-posts/sync`, {
         method: 'POST',
         headers: {
@@ -85,13 +85,13 @@ export const ConfigFooterEdit = () => (
   </Edit>
 );
 
-// ─── CONFIGURAÇÕES DO BLOG ───────────────────────────────────────────────────
+// ─── CONFIGURAÇÕES DO BLOG (EDITORES & BLOGGERS) ────────────────────────────
 export const ConfigBlogEdit = () => (
-  <Edit title="Configurações do Blog" id="singleton">
+  <Edit title="Configurações do Blog (Textos & Links)" id="singleton">
     <SimpleForm>
       <AdminHelpBanner
         title="O que esta tela altera no site?"
-        description={<>Altera os títulos institucionais, cabeçalhos, links sociais e tokens de API exibidos na página do <strong>Blog (<code>/blog</code>)</strong>.</>}
+        description={<>Altera os títulos institucionais, cabeçalhos e links sociais exibidos na página do <strong>Blog (<code>/blog</code>)</strong>.</>}
       />
       <TextInput source="artigosEyebrow" label="Blog - Eyebrow dos Artigos" fullWidth />
       <TextInput source="artigosHeadline" label="Blog - Headline dos Artigos" fullWidth />
@@ -102,8 +102,19 @@ export const ConfigBlogEdit = () => (
 
       <TextInput source="urlInstagram" label="Link Oficial do Instagram" fullWidth />
       <TextInput source="urlLinkedin" label="Link Oficial do LinkedIn" fullWidth />
+    </SimpleForm>
+  </Edit>
+);
 
-      <h3 style={{ marginTop: 32, marginBottom: 8, color: '#a855f7', fontWeight: 600 }}>
+// ─── TOKENS DE API DE REDES SOCIAIS (EXCLUSIVO ADMINISTRADORES) ──────────────
+export const ConfigSocialTokensEdit = () => (
+  <Edit title="Tokens de API de Redes Sociais (Exclusivo Admin)" id="singleton">
+    <SimpleForm>
+      <AdminHelpBanner
+        title="Gestão de Credenciais e Tokens da API Meta/LinkedIn"
+        description="Esta tela armazena os tokens confidenciais de acesso do Instagram Graph API e LinkedIn API. Apenas Administradores do sistema possuem permissão para visualizar e atualizar estas chaves."
+      />
+      <h3 style={{ marginTop: 16, marginBottom: 8, color: '#a855f7', fontWeight: 600 }}>
         🔑 Tokens de API para Busca Automática (Instagram & LinkedIn)
       </h3>
       <TextInput
