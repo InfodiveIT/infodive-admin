@@ -349,7 +349,7 @@ const MyMenu = () => {
           {/* Subgrupo: 1ª Seção (Hero) */}
           <ListItemButton onClick={() => toggleGroup('homeHero')} sx={{ borderRadius: '8px', margin: '2px 8px', pl: 2 }}>
             <ListItemIcon sx={{ minWidth: 32 }}><ViewCarouselIcon sx={{ fontSize: '1.2rem' }} /></ListItemIcon>
-            <ListItemText primary="1. Hero (Primeira Seção)" primaryTypographyProps={{ fontSize: '0.82rem', fontWeight: 500 }} />
+            <ListItemText primary="1. Primeira Seção" primaryTypographyProps={{ fontSize: '0.82rem', fontWeight: 500 }} />
             {openGroups.homeHero ? <ExpandMore /> : <ChevronRight />}
           </ListItemButton>
           <Collapse in={openGroups.homeHero} timeout="auto" unmountOnExit>
@@ -363,7 +363,7 @@ const MyMenu = () => {
           {/* Subgrupo: Bento Grid (Soluções) */}
           <ListItemButton onClick={() => toggleGroup('homeBento')} sx={{ borderRadius: '8px', margin: '2px 8px', pl: 2 }}>
             <ListItemIcon sx={{ minWidth: 32 }}><CategoryIcon sx={{ fontSize: '1.2rem' }} /></ListItemIcon>
-            <ListItemText primary="2. Bento Grid (Soluções)" primaryTypographyProps={{ fontSize: '0.82rem', fontWeight: 500 }} />
+            <ListItemText primary="2. Grid de Soluções" primaryTypographyProps={{ fontSize: '0.82rem', fontWeight: 500 }} />
             {openGroups.homeBento ? <ExpandMore /> : <ChevronRight />}
           </ListItemButton>
           <Collapse in={openGroups.homeBento} timeout="auto" unmountOnExit>
