@@ -10,7 +10,9 @@ import {
   ImageInput,
   ImageField,
   required,
+  useSimpleFormIteratorItem,
 } from 'react-admin';
+import { Box, Typography, Alert, Paper, Chip } from '@mui/material';
 import { AdminHelpBanner } from './AdminHelpBanner';
 import { LucideIconPickerInput } from './LucideIconPicker';
 
@@ -95,30 +97,107 @@ export const SobreValoresEdit = () => (
 );
 
 // ─── SOBRE CULTURA ───────────────────────────────────────────────────────────
+// ─── SOBRE CULTURA ───────────────────────────────────────────────────────────
+
+const FOTO_SPECS = [
+  {
+    posicao: 'Foto 1: Esquerda (Destaque Principal)',
+    proporcao: '4:5 (Vertical / De pé)',
+    resolucao: '1200 × 1500 px',
+    minimo: '800 × 1000 px',
+    dica: 'Esta foto fica em destaque à esquerda no layout e possui maior visibilidade. Enquadre a foto na vertical (de pé) com o assunto bem centralizado.',
+  },
+  {
+    posicao: 'Foto 2: Centro (Posição Intermediária)',
+    proporcao: '3:4 (Vertical / De pé)',
+    resolucao: '1200 × 1600 px',
+    minimo: '900 × 1200 px',
+    dica: 'Esta foto fica na coluna central com pequeno deslocamento de rolagem. Use foto na vertical com fundo corporativo/equipe.',
+  },
+  {
+    posicao: 'Foto 3: Direita (Posição Menor)',
+    proporcao: '3:4 (Vertical / De pé)',
+    resolucao: '1200 × 1600 px',
+    minimo: '900 × 1200 px',
+    dica: 'Esta foto fecha o trio à direita. Mantenha foto vertical e pessoas bem enquadradas ao centro.',
+  },
+];
+
+const validateExactThreePhotos = (value: any) => {
+  if (!Array.isArray(value) || value.length !== 3) {
+    return 'A galeria da Cultura deve conter EXATAMENTE 3 imagens.';
+  }
+  return undefined;
+};
+
+const FotoItemInfo = () => {
+  const item = useSimpleFormIteratorItem();
+  const index = item?.index ?? 0;
+  const spec = FOTO_SPECS[index] || FOTO_SPECS[0];
+
+  return (
+    <Paper variant="outlined" sx={{ p: 2, mb: 2, bgcolor: 'background.paper', borderRadius: 2, borderColor: 'divider' }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1, flexWrap: 'wrap', gap: 1 }}>
+        <Typography variant="subtitle1" sx={{ fontWeight: 'bold', color: 'primary.main' }}>
+          📍 {spec.posicao}
+        </Typography>
+        <Chip label={`Proporção: ${spec.proporcao}`} color="primary" size="small" variant="outlined" />
+      </Box>
+
+      <Typography variant="body2" sx={{ mb: 0.5, fontWeight: 500 }}>
+        📐 <strong>Resolução Recomendada:</strong> {spec.resolucao} &nbsp;|&nbsp; <strong>Mínimo:</strong> {spec.minimo}
+      </Typography>
+
+      <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.5 }}>
+        💡 <strong>Dica de Enquadramento:</strong> {spec.dica}
+      </Typography>
+    </Paper>
+  );
+};
+
 export const SobreCulturaEdit = () => (
   <Edit title="Sobre - Cultura Organizacional" id="singleton" mutationMode="pessimistic">
     <SimpleForm>
       <AdminHelpBanner
-        title="O que esta tela altera no site?"
-        description={<>Configura a <strong>Galeria de Fotos da Cultura Organizacional</strong> e o time na página <strong>Quem Somos (<code>/sobre</code>)</strong>.</>}
+        title="Galeria da Cultura Organizacional (3 Fotos Verticais Fixas)"
+        description={
+          <>
+            Configura os textos e as <strong>3 fotos verticais da cultura</strong> na página <strong>Quem Somos (<code>/sobre</code>)</strong>.<br />
+            ⚠️ <strong>Importante:</strong> O layout do site exige <strong>exatamente 3 fotos na vertical (de pé)</strong>. A adição ou remoção de fotos foi travada para manter o design e o efeito parallax intactos.
+          </>
+        }
       />
-      <TextInput source="eyebrow" label="Eyebrow" />
+      <TextInput source="eyebrow" label="Eyebrow (Ex: Cultura)" />
       <TextInput source="headline" label="Headline Principal" fullWidth />
       <TextInput source="paragrafo" label="Texto sobre Cultura & Time" multiline fullWidth />
+
+      <Alert severity="info" sx={{ width: '100%', my: 2 }}>
+        <strong>Regras de Imagem:</strong> As 3 fotos DEVEM ser tiradas na <strong>vertical (de pé)</strong>. Fotos horizontais (deitadas) sofrerão cortes indesejados nas laterais. Formatos aceitos: <strong>WEBP, PNG ou JPG</strong> (máximo 1MB cada).
+      </Alert>
       
-      <ArrayInput source="fotos" label="Fotos da Galeria de Cultura">
-        <SimpleFormIterator>
+      <ArrayInput 
+        source="fotos" 
+        label="Galeria de Fotos da Cultura (3 Posições Fixas)"
+        validate={validateExactThreePhotos}
+      >
+        <SimpleFormIterator
+          disableAdd
+          disableRemove
+          disableReordering
+          getItemLabel={(index) => `Posição ${index + 1} de 3 — ${FOTO_SPECS[index]?.posicao ?? ''}`}
+        >
+          <FotoItemInfo />
           <ImageInput 
             source="imagemUrl" 
-            label="Foto da Cultura (Recomendado: 800x600px - 4:3)" 
-            helperText="Tamanho recomendado: 800x600px (Proporção 4:3) ou 1200x800px (3:2). Formatos aceitos: WEBP ou PNG/JPG. Máximo: 1MB."
-            accept={{ 'image/png': ['.png'], 'image/webp': ['.webp'] }} 
+            label="Upload da Imagem Vertical (De Pé)" 
+            helperText="Selecione uma imagem na vertical (de pé). Formatos: WEBP, PNG ou JPG (máx. 1MB)."
+            accept={{ 'image/png': ['.png'], 'image/webp': ['.webp'], 'image/jpeg': ['.jpg', '.jpeg'] }} 
             validate={required()}
           >
             <ImageField source="src" title="title" />
           </ImageInput>
-          <TextInput source="alt" label="Texto Alternativo (Alt - Acessibilidade)" />
-          <NumberInput source="ordem" label="Ordem de Exibição" />
+          <TextInput source="alt" label="Texto Alternativo (Alt - Acessibilidade)" validate={required()} fullWidth />
+          <NumberInput source="ordem" label="Ordem de Exibição (1, 2 ou 3)" validate={required()} defaultValue={1} />
         </SimpleFormIterator>
       </ArrayInput>
     </SimpleForm>
