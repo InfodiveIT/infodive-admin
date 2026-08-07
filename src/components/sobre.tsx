@@ -99,6 +99,24 @@ export const SobreValoresEdit = () => (
 // ─── SOBRE CULTURA ───────────────────────────────────────────────────────────
 // ─── SOBRE CULTURA ───────────────────────────────────────────────────────────
 
+const normalizeFotos = (data: any) => {
+  if (!data) return data;
+  const fotos = Array.isArray(data.fotos) ? [...data.fotos] : [];
+  
+  while (fotos.length < 3) {
+    fotos.push({
+      imagemUrl: '',
+      alt: `Foto ${fotos.length + 1} da equipe Infodive`,
+      ordem: fotos.length + 1,
+    });
+  }
+
+  return {
+    ...data,
+    fotos: fotos.slice(0, 3),
+  };
+};
+
 const FOTO_SPECS = [
   {
     posicao: 'Foto 1: Esquerda (Destaque Principal)',
@@ -156,7 +174,12 @@ const FotoItemInfo = () => {
 };
 
 export const SobreCulturaEdit = () => (
-  <Edit title="Sobre - Cultura Organizacional" id="singleton" mutationMode="pessimistic">
+  <Edit 
+    title="Sobre - Cultura Organizacional" 
+    id="singleton" 
+    mutationMode="pessimistic"
+    queryOptions={{ select: normalizeFotos }}
+  >
     <SimpleForm>
       <AdminHelpBanner
         title="Galeria da Cultura Organizacional (3 Fotos Verticais Fixas)"
