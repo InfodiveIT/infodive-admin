@@ -2,6 +2,22 @@ import { AuthProvider } from 'react-admin';
 import { signOut, getSession } from 'next-auth/react';
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api/v1';
+const MICROSOFT_SESSION_ERROR = 'Não foi possível validar sua sessão Microsoft. Entre novamente.';
+
+const clearStoredAuthState = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('username');
+    localStorage.removeItem('role');
+};
+
+const clearMicrosoftSession = async () => {
+    clearStoredAuthState();
+    try {
+        await signOut({ redirect: false });
+    } catch {
+        // A autenticação deve falhar mesmo se o encerramento remoto da sessão não responder.
+    }
+};
 
 export const authProvider: AuthProvider = {
     login: async ({ username, password }) => {
@@ -11,7 +27,12 @@ export const authProvider: AuthProvider = {
             payload = { email: (username || '').trim(), accessKey: (password || '').trim() };
         } else {
             // Login Oficial Microsoft Entra ID (ID Token)
-            payload = { idToken: (username || '').trim() };
+            const idToken = (username || '').trim();
+            if (!idToken) {
+                await clearMicrosoftSession();
+                throw new Error(MICROSOFT_SESSION_ERROR);
+            }
+            payload = { idToken };
         }
 
         const response = await fetch(`${apiUrl}/auth/login`, {
@@ -78,24 +99,27 @@ export const authProvider: AuthProvider = {
         try {
             const session = await getSession();
             if (session) {
-                const idToken = (session as any).idToken;
-                const email = session.user?.email;
+                const rawIdToken = (session as any).idToken;
+                const idToken = typeof rawIdToken === 'string' ? rawIdToken.trim() : '';
 
-                if (idToken || email) {
-                    const response = await fetch(`${apiUrl}/auth/login`, {
-                        method: 'POST',
-                        body: JSON.stringify({ idToken: idToken || email }),
-                        headers: new Headers({ 'Content-Type': 'application/json' }),
-                    });
+                if (!idToken) {
+                    await clearMicrosoftSession();
+                    return Promise.reject(new Error(MICROSOFT_SESSION_ERROR));
+                }
 
-                    if (response.ok) {
-                        const data = await response.json();
-                        if (data.token) {
-                            localStorage.setItem('token', data.token);
-                            localStorage.setItem('username', data.email || 'Administrador');
-                            localStorage.setItem('role', data.role || 'ROLE_ADMIN');
-                            return Promise.resolve();
-                        }
+                const response = await fetch(`${apiUrl}/auth/login`, {
+                    method: 'POST',
+                    body: JSON.stringify({ idToken }),
+                    headers: new Headers({ 'Content-Type': 'application/json' }),
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.token) {
+                        localStorage.setItem('token', data.token);
+                        localStorage.setItem('username', data.email || 'Administrador');
+                        localStorage.setItem('role', data.role || 'ROLE_ADMIN');
+                        return Promise.resolve();
                     }
                 }
             }

@@ -2,8 +2,11 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import { useLogin, useNotify } from "react-admin";
-import { signIn, useSession } from "next-auth/react";
+import { signIn, signOut, useSession } from "next-auth/react";
 import Image from "next/image";
+
+const MICROSOFT_SESSION_ERROR =
+  "Não foi possível validar sua sessão Microsoft. Entre novamente.";
 
 export default function CustomLoginPage() {
   const login = useLogin();
@@ -20,22 +23,31 @@ export default function CustomLoginPage() {
   // Quando o usuário é autenticado com sucesso pelo Microsoft Entra ID via NextAuth
   useEffect(() => {
     if (status === "authenticated" && session && !attemptMade.current) {
-      const idToken = (session as any).idToken;
-      const email = session.user?.email;
+      const rawIdToken = (session as any).idToken;
+      const idToken = typeof rawIdToken === "string" ? rawIdToken.trim() : "";
 
-      if (idToken || email) {
-        attemptMade.current = true;
-        setLoading(true);
-        login({ username: idToken || email })
-          .then(() => {
-            window.location.href = "/";
-          })
-          .catch((error) => {
-            const errorMsg = error?.message || "Acesso negado. Conta sem permissão.";
-            notify(errorMsg, { type: "error" });
-            setLoading(false);
-          });
+      attemptMade.current = true;
+
+      if (!idToken) {
+        localStorage.removeItem("token");
+        localStorage.removeItem("username");
+        localStorage.removeItem("role");
+        setLoading(false);
+        notify(MICROSOFT_SESSION_ERROR, { type: "error" });
+        void signOut({ redirect: false }).catch(() => undefined);
+        return;
       }
+
+      setLoading(true);
+      login({ username: idToken })
+        .then(() => {
+          window.location.href = "/";
+        })
+        .catch((error) => {
+          const errorMsg = error?.message || "Acesso negado. Conta sem permissão.";
+          notify(errorMsg, { type: "error" });
+          setLoading(false);
+        });
     }
   }, [status, session, login, notify]);
 
