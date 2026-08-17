@@ -22,6 +22,7 @@ import {
   Typography,
   IconButton,
   Tooltip,
+  Alert,
 } from '@mui/material';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import KeyIcon from '@mui/icons-material/Key';
@@ -88,13 +89,14 @@ const ParceiroTokenEmpty = ({ onOpenCreate }: { onOpenCreate: () => void }) => (
 export const ParceiroTokenList = () => {
   const [openCreate, setOpenCreate] = useState(false);
   const [openTokenModal, setOpenTokenModal] = useState(false);
+  const [renewTokenId, setRenewTokenId] = useState<string | null>(null);
+  const [renewDays, setRenewDays] = useState<number | ''>(30);
   const [generatedToken, setGeneratedToken] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
 
   // Form State
   const [nomeAgencia, setNomeAgencia] = useState('');
   const [email, setEmail] = useState('');
-  const [role, setRole] = useState('ROLE_BLOGGER');
   const [diasValidade, setDiasValidade] = useState<number | ''>(30);
   const [loading, setLoading] = useState(false);
 
@@ -111,7 +113,6 @@ export const ParceiroTokenList = () => {
         body: JSON.stringify({
           nomeAgencia,
           email,
-          role,
           diasValidade: diasValidade === '' ? null : Number(diasValidade),
         }),
       });
@@ -154,18 +155,24 @@ export const ParceiroTokenList = () => {
     }
   };
 
-  const handleRenovar = async (id: string) => {
+  const handleRenovar = async () => {
+    if (!renewTokenId) return;
     try {
-      const res = await fetch(`${apiUrl}/tokens-agencia/${id}/renovar?dias=30`, {
+      const selectedDays = renewDays === '' ? 0 : Number(renewDays);
+      const res = await fetch(`${apiUrl}/tokens-agencia/${renewTokenId}/renovar?dias=${selectedDays}`, {
         method: 'PATCH',
         headers: getTokenHeader(),
       });
-      if (res.ok) {
-        notify('Token renovado por +30 dias!', { type: 'success' });
-        refresh();
+      if (!res.ok) {
+        const error = await res.json().catch(() => ({}));
+        throw new Error(error.message || 'Erro ao renovar token');
       }
-    } catch {
-      notify('Erro ao renovar token', { type: 'error' });
+      notify(selectedDays === 0 ? 'Token renovado sem expiração!' : `Token renovado por ${selectedDays} dias!`, { type: 'success' });
+      setRenewTokenId(null);
+      setRenewDays(30);
+      refresh();
+    } catch (err: any) {
+      notify(err.message || 'Erro ao renovar token', { type: 'error' });
     }
   };
 
@@ -218,11 +225,11 @@ export const ParceiroTokenList = () => {
           
           <FunctionField
             label="Perfil"
-            render={(record: any) => (
+            render={() => (
               <Chip
-                label={record.role === 'ROLE_ADMIN' ? 'Admin Total' : 'Blogger (Conteúdo)'}
+                label="Blogger (Conteúdo)"
                 size="small"
-                color={record.role === 'ROLE_ADMIN' ? 'secondary' : 'default'}
+                color="default"
                 variant="outlined"
               />
             )}
@@ -244,17 +251,12 @@ export const ParceiroTokenList = () => {
           <DateField source="expiraEm" label="Expira em" showTime emptyText="Sem expiração" />
 
           <FunctionField
-            label="Chave / Token"
+            label="Identificação da chave"
             render={(record: any) => (
               <Box display="flex" alignItems="center" gap={1}>
                 <Typography variant="body2" sx={{ fontFamily: 'monospace', fontSize: '0.8rem' }}>
-                  {record.token ? `${record.token.slice(0, 18)}...` : '-'}
+                  {record.tokenPreview || 'Chave anterior — gere uma nova'}
                 </Typography>
-                <Tooltip title="Copiar Token">
-                  <IconButton size="small" onClick={() => copyToClipboard(record.token)}>
-                    <ContentCopyIcon fontSize="small" />
-                  </IconButton>
-                </Tooltip>
               </Box>
             )}
           />
@@ -270,11 +272,20 @@ export const ParceiroTokenList = () => {
                     </IconButton>
                   </Tooltip>
                 )}
-                <Tooltip title="Renovar por +30 dias">
-                  <IconButton size="small" color="primary" onClick={() => handleRenovar(record.id)}>
-                    <AutorenewIcon fontSize="small" />
-                  </IconButton>
-                </Tooltip>
+                {record.tokenPreview && (
+                  <Tooltip title="Definir novo prazo de validade">
+                    <IconButton
+                      size="small"
+                      color="primary"
+                      onClick={() => {
+                        setRenewTokenId(record.id);
+                        setRenewDays(30);
+                      }}
+                    >
+                      <AutorenewIcon fontSize="small" />
+                    </IconButton>
+                  </Tooltip>
+                )}
                 <Tooltip title="Excluir">
                   <IconButton size="small" color="default" onClick={() => handleDelete(record.id)}>
                     <DeleteIcon fontSize="small" />
@@ -285,6 +296,29 @@ export const ParceiroTokenList = () => {
           />
         </Datagrid>
       </List>
+
+      <Dialog open={renewTokenId !== null} onClose={() => setRenewTokenId(null)} maxWidth="xs" fullWidth>
+        <DialogTitle>Renovar validade do acesso</DialogTitle>
+        <DialogContent dividers>
+          <MuiTextField
+            select
+            label="Novo prazo a partir de hoje"
+            fullWidth
+            value={renewDays}
+            onChange={(e) => setRenewDays(e.target.value === '' ? '' : Number(e.target.value))}
+          >
+            <MenuItem value={15}>15 dias</MenuItem>
+            <MenuItem value={30}>30 dias</MenuItem>
+            <MenuItem value={90}>90 dias (3 meses)</MenuItem>
+            <MenuItem value={365}>1 ano</MenuItem>
+            <MenuItem value={''}>Sem expiração (Permanente)</MenuItem>
+          </MuiTextField>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setRenewTokenId(null)}>Cancelar</Button>
+          <Button variant="contained" onClick={handleRenovar}>Confirmar renovação</Button>
+        </DialogActions>
+      </Dialog>
 
       {/* Modal de Criação de Token */}
       <Dialog open={openCreate} onClose={() => setOpenCreate(false)} maxWidth="sm" fullWidth>
@@ -312,16 +346,9 @@ export const ParceiroTokenList = () => {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
               />
-              <MuiTextField
-                select
-                label="Perfil de Permissão"
-                fullWidth
-                value={role}
-                onChange={(e) => setRole(e.target.value)}
-              >
-                <MenuItem value="ROLE_BLOGGER">Blogger (Apenas Criar/Editar Posts de Blog e Mídias)</MenuItem>
-                <MenuItem value="ROLE_ADMIN">Admin Total (Acesso Completo ao Painel)</MenuItem>
-              </MuiTextField>
+              <Alert severity="info">
+                O acesso gerado será sempre Blogger, limitado ao blog, mídias sociais e upload de imagens.
+              </Alert>
               <MuiTextField
                 select
                 label="Validade do Token"
@@ -349,7 +376,15 @@ export const ParceiroTokenList = () => {
       </Dialog>
 
       {/* Modal com Token Gerado */}
-      <Dialog open={openTokenModal} onClose={() => setOpenTokenModal(false)} maxWidth="sm" fullWidth>
+      <Dialog
+        open={openTokenModal}
+        onClose={() => {
+          setOpenTokenModal(false);
+          setGeneratedToken(null);
+        }}
+        maxWidth="sm"
+        fullWidth
+      >
         <DialogTitle display="flex" alignItems="center" gap={1}>
           <CheckCircleIcon color="success" />
           Token de Acesso Gerado com Sucesso!
@@ -357,9 +392,7 @@ export const ParceiroTokenList = () => {
         <DialogContent dividers>
           <Box display="flex" flexDirection="column" gap={2} pt={1}>
             <Typography variant="body2" color="text.secondary">
-              Copie o token abaixo e envie para a agência. Ele funcionará enviando o cabeçalho HTTP:
-              <br />
-              <code>Authorization: Bearer infodive_pat_...</code>
+              Copie esta chave agora e envie para a agência. Por segurança, ela não poderá ser visualizada novamente depois que esta janela for fechada.
             </Typography>
             <Box
               p={2}
@@ -390,7 +423,14 @@ export const ParceiroTokenList = () => {
           </Box>
         </DialogContent>
         <DialogActions sx={{ p: 2 }}>
-          <Button variant="contained" color="primary" onClick={() => setOpenTokenModal(false)}>
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={() => {
+              setOpenTokenModal(false);
+              setGeneratedToken(null);
+            }}
+          >
             Concluído
           </Button>
         </DialogActions>

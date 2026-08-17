@@ -9,8 +9,10 @@ import {
   useNotify,
   useRefresh,
   Button,
+  FormDataConsumer,
 } from 'react-admin';
 import SyncIcon from '@mui/icons-material/Sync';
+import { Alert } from '@mui/material';
 import { AdminHelpBanner } from './AdminHelpBanner';
 
 const SyncSocialPostsButton = () => {
@@ -112,16 +114,24 @@ export const ConfigSocialTokensEdit = () => (
     <SimpleForm>
       <AdminHelpBanner
         title="Gestão de Credenciais e Tokens da API Meta/LinkedIn"
-        description="Esta tela armazena os tokens confidenciais de acesso do Instagram Graph API e LinkedIn API. Apenas Administradores do sistema possuem permissão para visualizar e atualizar estas chaves."
+        description="Esta tela cadastra ou substitui os tokens confidenciais do Instagram e LinkedIn. Por segurança, o valor salvo nunca é exibido novamente."
       />
+      <FormDataConsumer>
+        {({ formData }) => (
+          <Alert severity="info" sx={{ mb: 2 }}>
+            Instagram: {formData.instagramConfigured ? 'configurado' : 'não configurado'} · LinkedIn:{' '}
+            {formData.linkedinConfigured ? 'configurado' : 'não configurado'}
+          </Alert>
+        )}
+      </FormDataConsumer>
       <h3 style={{ marginTop: 16, marginBottom: 8, color: '#a855f7', fontWeight: 600 }}>
         🔑 Tokens de API para Busca Automática (Instagram & LinkedIn)
       </h3>
       <TextInput
         source="instagramAccessToken"
         label="Instagram Graph API - Access Token de Longa Duração"
-        helperText="Obtenha no Meta for Developers. Token com permissão instagram_basic e instagram_manage_insights"
-        multiline
+        helperText="Deixe em branco para manter o token atual. Um novo valor substitui o anterior e não será exibido novamente."
+        type="password"
         fullWidth
       />
       <TextInput
@@ -134,8 +144,8 @@ export const ConfigSocialTokensEdit = () => (
       <TextInput
         source="linkedinAccessToken"
         label="LinkedIn API - Access Token (OAuth 2.0)"
-        helperText="Token de acesso concedido pela Organização no LinkedIn Developer Portal"
-        multiline
+        helperText="Deixe em branco para manter o token atual. Um novo valor substitui o anterior e não será exibido novamente."
+        type="password"
         fullWidth
       />
       <TextInput

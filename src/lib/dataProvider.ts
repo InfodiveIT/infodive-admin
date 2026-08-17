@@ -162,7 +162,7 @@ export const dataProvider: DataProvider = {
             'sobre-numeros', 'sobre-timeline', 'sobre-valores', 'sobre-cultura'
         ].includes(resource);
         
-        const targetEndpoint = resource === 'config-social' ? 'config-blog' : resource;
+        const targetEndpoint = resource === 'config-social' ? 'config-blog/social' : resource;
         const url = isSingleton ? `${apiUrl}/${targetEndpoint}` : `${apiUrl}/${resource}/${params.id}`;
         const { json } = await httpClient(url);
         
@@ -204,7 +204,7 @@ export const dataProvider: DataProvider = {
             'sobre-numeros', 'sobre-timeline', 'sobre-valores', 'sobre-cultura'
         ].includes(resource);
         
-        const targetEndpoint = resource === 'config-social' ? 'config-blog' : resource;
+        const targetEndpoint = resource === 'config-social' ? 'config-blog/social' : resource;
         const url = isSingleton ? `${apiUrl}/${targetEndpoint}` : `${apiUrl}/${resource}/${params.id}`;
         
         // Upload de arquivos se existirem novos arquivos selecionados no formulário
@@ -218,6 +218,10 @@ export const dataProvider: DataProvider = {
         
         if (isSingleton) {
             delete processedData.id;
+        }
+        if (resource === 'config-social') {
+            delete processedData.instagramConfigured;
+            delete processedData.linkedinConfigured;
         }
         
         const { json } = await httpClient(url, {
