@@ -137,7 +137,7 @@ export const ClienteHomeList = () => (
         title="Onde estes clientes aparecem?"
         description={
           <>
-            Na seção <strong>Clientes</strong> da Home Page (<code>/</code>), com a animação de expansão e tooltips institucionais.
+            Na seção <strong>Clientes</strong> da Home Page (<code>/</code>), na rede de conexões com feixes de luz animados e tooltips institucionais.
           </>
         }
       />
