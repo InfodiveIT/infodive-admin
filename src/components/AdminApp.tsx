@@ -173,6 +173,7 @@ import CameraAltIcon from '@mui/icons-material/CameraAlt';
 import PeopleIcon from '@mui/icons-material/People';
 import SupervisorAccountIcon from '@mui/icons-material/SupervisorAccount';
 import GavelIcon from '@mui/icons-material/Gavel';
+import HandshakeIcon from '@mui/icons-material/Handshake';
 
 // Custom Views
 import {
@@ -262,6 +263,11 @@ import {
 } from './admins';
 
 import { PoliticaList, PoliticaEdit } from './politicas';
+import {
+  ClienteHomeList,
+  ClienteHomeEdit,
+  ClienteHomeCreate,
+} from './clientes-home';
 
 // Custom collapsible sidebar menu
 const MyMenu = () => {
@@ -273,6 +279,7 @@ const MyMenu = () => {
     homeProdutos: false,
     homeProblemas: false,
     homeTrust: false,
+    homeClientes: false,
     homeTrustStats: false,
     homeFaq: false,
     paginasSolucoes: false,
@@ -411,10 +418,23 @@ const MyMenu = () => {
             </List>
           </Collapse>
 
-          {/* Subgrupo: 6. Métricas & Estatísticas */}
+          {/* Subgrupo: 6. Clientes */}
+          <ListItemButton onClick={() => toggleGroup('homeClientes')} sx={{ borderRadius: '8px', margin: '2px 8px', pl: 2 }}>
+            <ListItemIcon sx={{ minWidth: 32 }}><HandshakeIcon sx={{ fontSize: '1.2rem' }} /></ListItemIcon>
+            <ListItemText primary="6. Clientes" primaryTypographyProps={{ fontSize: '0.82rem', fontWeight: 500 }} />
+            {openGroups.homeClientes ? <ExpandMore /> : <ChevronRight />}
+          </ListItemButton>
+          <Collapse in={openGroups.homeClientes} timeout="auto" unmountOnExit>
+            <List component="div" disablePadding sx={{ pl: 3 }}>
+              <Menu.Item to="/secoes-home/clientes" primaryText="Editar Título" leftIcon={<LabelIcon sx={{ fontSize: '1rem' }} />} />
+              <Menu.Item to="/clientes-home" primaryText="Gerenciar Clientes" leftIcon={<HandshakeIcon sx={{ fontSize: '1rem' }} />} />
+            </List>
+          </Collapse>
+
+          {/* Subgrupo: 7. Métricas & Estatísticas */}
           <ListItemButton onClick={() => toggleGroup('homeTrustStats')} sx={{ borderRadius: '8px', margin: '2px 8px', pl: 2 }}>
             <ListItemIcon sx={{ minWidth: 32 }}><BarChartIcon sx={{ fontSize: '1.2rem' }} /></ListItemIcon>
-            <ListItemText primary="6. Métricas & Estatísticas" primaryTypographyProps={{ fontSize: '0.82rem', fontWeight: 500 }} />
+            <ListItemText primary="7. Métricas & Estatísticas" primaryTypographyProps={{ fontSize: '0.82rem', fontWeight: 500 }} />
             {openGroups.homeTrustStats ? <ExpandMore /> : <ChevronRight />}
           </ListItemButton>
           <Collapse in={openGroups.homeTrustStats} timeout="auto" unmountOnExit>
@@ -423,10 +443,10 @@ const MyMenu = () => {
             </List>
           </Collapse>
 
-          {/* Subgrupo: 7. Perguntas (FAQ) */}
+          {/* Subgrupo: 8. Perguntas (FAQ) */}
           <ListItemButton onClick={() => toggleGroup('homeFaq')} sx={{ borderRadius: '8px', margin: '2px 8px', pl: 2 }}>
             <ListItemIcon sx={{ minWidth: 32 }}><QuestionAnswerIcon sx={{ fontSize: '1.2rem' }} /></ListItemIcon>
-            <ListItemText primary="7. Perguntas (FAQ)" primaryTypographyProps={{ fontSize: '0.82rem', fontWeight: 500 }} />
+            <ListItemText primary="8. Perguntas (FAQ)" primaryTypographyProps={{ fontSize: '0.82rem', fontWeight: 500 }} />
             {openGroups.homeFaq ? <ExpandMore /> : <ChevronRight />}
           </ListItemButton>
           <Collapse in={openGroups.homeFaq} timeout="auto" unmountOnExit>
@@ -700,6 +720,14 @@ export default function AdminApp() {
         list={withAdminGuard(HomeTrustStatsList)}
         edit={withAdminGuard(HomeTrustStatsEdit)}
         icon={BarChartIcon}
+      />
+      <Resource
+        name="clientes-home"
+        options={{ label: 'Home - Clientes' }}
+        list={withAdminGuard(ClienteHomeList)}
+        edit={withAdminGuard(ClienteHomeEdit)}
+        create={withAdminGuard(ClienteHomeCreate)}
+        icon={HandshakeIcon}
       />
       <Resource
         name="secoes-home"
