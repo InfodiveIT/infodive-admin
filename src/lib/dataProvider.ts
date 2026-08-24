@@ -99,65 +99,30 @@ const triggerRevalidation = async (resource: string) => {
 };
 
 export type ClienteHomeAdminRecord = RaRecord<string> & {
-    slug: string;
     nome: string;
     segmento: string;
     descricaoCurta: string;
     logoUrl: string | null;
-    logoMimeType: string | null;
-    logoBytes: number | null;
-    logoSha256: string | null;
     ordem: number;
-    aprovado: boolean;
     ativo: boolean;
-    arquivado: boolean;
     createdAt?: string;
     updatedAt?: string;
 };
 
-export type ClientesHomeDataProvider = DataProvider & {
-    validarLogoClienteHome: (id: Identifier) => Promise<{ data: ClienteHomeAdminRecord }>;
-    definirAprovacaoClienteHome: (
-        id: Identifier,
-        aprovado: boolean,
-    ) => Promise<{ data: ClienteHomeAdminRecord }>;
-    definirArquivamentoClienteHome: (
-        id: Identifier,
-        arquivado: boolean,
-    ) => Promise<{ data: ClienteHomeAdminRecord }>;
-    reordenarClientesHome: (ids: Identifier[]) => Promise<{ data: ClienteHomeAdminRecord[] }>;
-    publicarClientesHome: (ids: Identifier[]) => Promise<{ data: ClienteHomeAdminRecord[] }>;
-};
-
-const normalizeOptionalUrl = (value: unknown): string | null => {
-    if (typeof value !== 'string') return null;
-    const normalized = value.trim();
-    return normalized.length > 0 ? normalized : null;
-};
-
-// Clientes da Home usam apenas URL informada manualmente. Campos de estado,
-// metadados de validação e slug são controlados exclusivamente pelo backend.
 const sanitizeClienteHomeEditorialData = (
     data: Record<string, unknown>,
     previousData?: Record<string, unknown>,
 ) => ({
+    ...data,
     nome: typeof data.nome === 'string' ? data.nome.trim() : '',
     segmento: typeof data.segmento === 'string' ? data.segmento.trim() : '',
     descricaoCurta: typeof data.descricaoCurta === 'string' ? data.descricaoCurta.trim() : '',
-    logoUrl: normalizeOptionalUrl(data.logoUrl),
+    logoUrl: typeof data.logoUrl === 'string' && data.logoUrl.trim().length > 0 ? data.logoUrl.trim() : null,
     ordem: Number(data.ordem ?? previousData?.ordem ?? 1),
+    ativo: data.ativo !== undefined ? Boolean(data.ativo) : true,
 });
 
-const jsonRequest = (method: 'PATCH' | 'PUT', body: unknown) => ({
-    method,
-    headers: new Headers({
-        Accept: 'application/json',
-        'Content-Type': 'application/json',
-    }),
-    body: JSON.stringify(body),
-});
-
-export const dataProvider: ClientesHomeDataProvider = {
+export const dataProvider: DataProvider = {
     getList: async (resource, params) => {
         const { page, perPage } = params.pagination || { page: 1, perPage: 10 };
         const { field, order } = params.sort || { field: 'id', order: 'ASC' };
@@ -178,47 +143,62 @@ export const dataProvider: ClientesHomeDataProvider = {
                 total: json.totalElements || 0,
             };
         } else {
-            // Outros recursos que retornam lista simples JSON Array
+            // Endpoints que retornam lista completa (List<Entity>)
             const { json } = await httpClient(url);
             let data = Array.isArray(json) ? json : [];
             
-            // Filtro client-side simples
+            // Filtros locais em memória
             if (params.filter && Object.keys(params.filter).length > 0) {
-                data = data.filter((item: any) => 
-                    Object.entries(params.filter).every(([k, v]) => 
-                        v === undefined || v === null || v === '' || 
-                        String(item[k]).toLowerCase().includes(String(v).toLowerCase())
-                    )
-                );
+                data = data.filter((item: any) => {
+                    return Object.entries(params.filter).every(([key, filterVal]) => {
+                        if (filterVal === undefined || filterVal === null || filterVal === '') return true;
+                        
+                        // Busca textual abrangente (q)
+                        if (key === 'q') {
+                            const searchStr = String(filterVal).toLowerCase();
+                            return Object.values(item).some(val => 
+                                typeof val === 'string' && val.toLowerCase().includes(searchStr)
+                            );
+                        }
+                        
+                        const itemVal = item[key];
+                        if (typeof itemVal === 'string') {
+                            return itemVal.toLowerCase().includes(String(filterVal).toLowerCase());
+                        }
+                        return itemVal === filterVal;
+                    });
+                });
             }
             
-            // Ordenação client-side simples
+            // Ordenação local em memória
             if (field) {
-                data.sort((a: any, b: any) => {
+                data = [...data].sort((a: any, b: any) => {
                     const valA = a[field];
                     const valB = b[field];
-                    if (valA < valB) return order === 'ASC' ? -1 : 1;
-                    if (valA > valB) return order === 'ASC' ? 1 : -1;
+                    if (valA === undefined || valA === null) return 1;
+                    if (valB === undefined || valB === null) return -1;
+                    
+                    if (typeof valA === 'number' && typeof valB === 'number') {
+                        return order === 'ASC' ? valA - valB : valB - valA;
+                    }
+                    
+                    const strA = String(valA).toLowerCase();
+                    const strB = String(valB).toLowerCase();
+                    if (strA < strB) return order === 'ASC' ? -1 : 1;
+                    if (strA > strB) return order === 'ASC' ? 1 : -1;
                     return 0;
                 });
             }
             
-            // A reordenação dos clientes precisa sempre da lista completa para
-            // que o backend normalize as posições de forma atômica.
-            if (resource === 'clientes-home') {
-                return {
-                    data,
-                    total: data.length,
-                };
-            }
-
-            // Paginação client-side
+            // Paginação local em memória
+            const total = data.length;
             const start = (page - 1) * perPage;
-            const end = page * perPage;
+            const end = start + perPage;
+            const pageData = data.slice(start, end);
             
             return {
-                data: data.slice(start, end),
-                total: data.length,
+                data: pageData,
+                total: total,
             };
         }
     },
@@ -240,21 +220,20 @@ export const dataProvider: ClientesHomeDataProvider = {
         if (resource === 'paginas-hero' || resource === 'secoes-home' || resource === 'ctas') {
             json.id = params.id;
         }
-        if (resource === 'contato-info' && json.cardBullets) {
-            json.cardBullets = json.cardBullets.map((bullet: string) => ({ text: bullet }));
-        }
+        
         return { data: json };
     },
     
     getMany: async (resource, params) => {
         const url = `${apiUrl}/${resource}`;
         const { json } = await httpClient(url);
-        const data = Array.isArray(json) ? json : (json.content || []);
-        return { data: data.filter((item: any) => params.ids.includes(item.id)) };
+        const allData = Array.isArray(json) ? json : (json.content || []);
+        const data = allData.filter((item: any) => params.ids.includes(item.id));
+        return { data };
     },
     
     getManyReference: async (resource, params) => {
-        const { page, perPage } = params.pagination || { page: 1, perPage: 10 };
+        const { page, perPage } = params.pagination;
         const url = `${apiUrl}/${resource}`;
         const { json } = await httpClient(url);
         const allData = Array.isArray(json) ? json : (json.content || []);
@@ -275,7 +254,6 @@ export const dataProvider: ClientesHomeDataProvider = {
         const targetEndpoint = resource === 'config-social' ? 'config-blog/social' : resource;
         const url = isSingleton ? `${apiUrl}/${targetEndpoint}` : `${apiUrl}/${resource}/${params.id}`;
         
-        // Clientes da Home processam upload de imagem para o Supabase Storage e depois sanitizam os dados editoriais
         const processedData = await checkAndUploadFiles(params.data);
         const finalData = resource === 'clientes-home'
             ? sanitizeClienteHomeEditorialData(processedData, params.previousData)
@@ -326,7 +304,6 @@ export const dataProvider: ClientesHomeDataProvider = {
     create: async (resource, params) => {
         const url = `${apiUrl}/${resource}`;
         
-        // Clientes da Home processam upload de imagem para o Supabase Storage e depois sanitizam os dados editoriais
         const processedData = await checkAndUploadFiles(params.data);
         const finalData = resource === 'clientes-home'
             ? sanitizeClienteHomeEditorialData(processedData)
@@ -347,9 +324,6 @@ export const dataProvider: ClientesHomeDataProvider = {
     },
     
     delete: async (resource, params) => {
-        if (resource === 'clientes-home') {
-            throw new Error('Clientes da Home devem ser arquivados; exclusão definitiva não é permitida.');
-        }
         const url = `${apiUrl}/${resource}/${params.id}`;
         await httpClient(url, {
             method: 'DELETE',
@@ -359,9 +333,6 @@ export const dataProvider: ClientesHomeDataProvider = {
     },
     
     deleteMany: async (resource, params) => {
-        if (resource === 'clientes-home') {
-            throw new Error('Clientes da Home devem ser arquivados; exclusão definitiva não é permitida.');
-        }
         await Promise.all(
             params.ids.map(id =>
                 httpClient(`${apiUrl}/${resource}/${id}`, {
@@ -371,49 +342,5 @@ export const dataProvider: ClientesHomeDataProvider = {
         );
         triggerRevalidation(resource);
         return { data: params.ids };
-    },
-
-    validarLogoClienteHome: async (id) => {
-        const { json } = await httpClient(`${apiUrl}/clientes-home/${encodeURIComponent(String(id))}/validar-logo`, {
-            method: 'POST',
-            headers: new Headers({ Accept: 'application/json' }),
-        });
-        return { data: json };
-    },
-
-    definirAprovacaoClienteHome: async (id, aprovado) => {
-        const { json } = await httpClient(
-            `${apiUrl}/clientes-home/${encodeURIComponent(String(id))}/aprovacao`,
-            jsonRequest('PATCH', { aprovado }),
-        );
-        await triggerRevalidation('home-clientes');
-        return { data: json };
-    },
-
-    definirArquivamentoClienteHome: async (id, arquivado) => {
-        const { json } = await httpClient(
-            `${apiUrl}/clientes-home/${encodeURIComponent(String(id))}/arquivamento`,
-            jsonRequest('PATCH', { arquivado }),
-        );
-        await triggerRevalidation('home-clientes');
-        return { data: json };
-    },
-
-    reordenarClientesHome: async (ids) => {
-        const { json } = await httpClient(
-            `${apiUrl}/clientes-home/reordenar`,
-            jsonRequest('PUT', { ids }),
-        );
-        await triggerRevalidation('home-clientes');
-        return { data: Array.isArray(json) ? json : [] };
-    },
-
-    publicarClientesHome: async (ids) => {
-        const { json } = await httpClient(
-            `${apiUrl}/clientes-home/publicacao`,
-            jsonRequest('PUT', { ids }),
-        );
-        await triggerRevalidation('home-clientes');
-        return { data: Array.isArray(json) ? json : [] };
     },
 };
