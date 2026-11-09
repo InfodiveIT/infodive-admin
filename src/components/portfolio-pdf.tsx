@@ -23,6 +23,9 @@ import {
   DEFAULT_CONFIG,
   type FabricanteItem,
   type PdfFabricante,
+  type PdfProdutoCard,
+  type PdfProdutoDestaque,
+  type PdfTituloDescricao,
   type PdfSolucaoCard,
   type PortfolioConfig,
   type PortfolioDocumentData,
@@ -313,6 +316,8 @@ export const PortfolioPdfPage = () => {
           telefone: contato?.telefone ?? '',
           endereco: contato?.endereco ?? '',
           ...stored.config,
+          // título antigo padrão → novo padrão
+          ...(stored.config?.portfolioTitulo === 'Nosso portfólio' ? { portfolioTitulo: DEFAULT_CONFIG.portfolioTitulo } : {}),
         });
         hydrated.current = true;
       } catch (err: any) {
@@ -345,34 +350,19 @@ export const PortfolioPdfPage = () => {
       [key]: prev[key].includes(id) ? prev[key].filter((x) => x !== id) : [...prev[key], id],
     }));
 
-  // Marcar produto marca a sua solução; desmarcar solução remove seus produtos
+  // Soluções e produtos são seções independentes no PDF: marcar um não mexe no outro.
   const setProdutos = (ids: string[], checked: boolean) =>
     setSelection((prev) => {
-      const produtos = new Set(prev.produtos);
-      const solucoes = new Set(prev.solucoes);
-      ids.forEach((id) => {
-        if (checked) {
-          produtos.add(id);
-          const slug = produtoById.get(id)?.solucaoSlug;
-          const sol = slug ? solucaoBySlug.get(slug) : undefined;
-          if (sol) solucoes.add(sol.id);
-        } else {
-          produtos.delete(id);
-        }
-      });
-      return { ...prev, produtos: Array.from(produtos), solucoes: Array.from(solucoes) };
+      const set = new Set(prev.produtos);
+      ids.forEach((id) => (checked ? set.add(id) : set.delete(id)));
+      return { ...prev, produtos: Array.from(set) };
     });
 
   const setSolucoes = (ids: string[], checked: boolean) =>
     setSelection((prev) => {
-      const solucoes = new Set(prev.solucoes);
-      let produtos = prev.produtos;
-      ids.forEach((id) => (checked ? solucoes.add(id) : solucoes.delete(id)));
-      if (!checked) {
-        const slugs = new Set(ids.map((id) => catalog?.solucoes.find((s) => s.id === id)?.slug));
-        produtos = produtos.filter((pid) => !slugs.has(produtoById.get(pid)?.solucaoSlug ?? undefined));
-      }
-      return { ...prev, solucoes: Array.from(solucoes), produtos };
+      const set = new Set(prev.solucoes);
+      ids.forEach((id) => (checked ? set.add(id) : set.delete(id)));
+      return { ...prev, solucoes: Array.from(set) };
     });
 
   const setMany = (key: 'fabricantes' | 'servicos') => (ids: string[], checked: boolean) =>
@@ -394,19 +384,31 @@ export const PortfolioPdfPage = () => {
       ]);
       doc.registerPortfolioFonts(`${window.location.origin}/fonts`);
 
-      // Soluções → cards (produtos escolhidos; senão recursos-chave da solução)
+      // Links para o site (produto → página do produto; fabricante → catálogo filtrado)
+      const site = (config.siteUrl || DEFAULT_CONFIG.siteUrl).trim().replace(/\/+$/, '');
+      const produtoHref = (slug?: string | null) => (slug ? `${site}/produtos/${encodeURIComponent(slug)}` : null);
+      const fabricanteHref = (slug?: string | null) => (slug ? `${site}/produtos?fabricante=${encodeURIComponent(slug)}` : null);
+
+      // Seção "Nossas soluções": título + descrição curta de cada solução
       const selSol = new Set(selection.solucoes);
       const selProd = new Set(selection.produtos);
       const cards: PdfSolucaoCard[] = catalog.solucoes
         .filter((s) => selSol.has(s.id))
-        .map((s) => {
-          const produtos = catalog.produtos.filter((p) => selProd.has(p.id) && p.solucaoSlug === s.slug).map((p) => p.nome);
-          const recursos = (s.recursosChave ?? []).filter(Boolean).slice(0, 5);
-          const itens = produtos.length > 0 ? produtos : recursos.length > 0 ? recursos : s.descricaoCurta ? [s.descricaoCurta] : [];
-          return { titulo: s.titulo, itens };
-        });
-      const soltos = catalog.produtos.filter((p) => selProd.has(p.id) && !p.solucaoSlug).map((p) => p.nome);
-      if (soltos.length > 0) cards.push({ titulo: 'Outros produtos', itens: soltos });
+        .map((s) => ({ titulo: s.titulo, descricao: s.subtituloCurto || s.descricaoCurta || null }));
+
+      // Seção "Nossos produtos" (com 2+ produtos; com 1 só, ele vira a seção completa "Conheça o …")
+      const produtosSel = selection.produtos.length >= 2 ? catalog.produtos.filter((p) => selProd.has(p.id)) : [];
+      const logoUrls = Array.from(new Set(produtosSel.map((p) => p.fabricanteLogoUrl).filter((u): u is string => Boolean(u))));
+      const logosCarregados = await Promise.all(logoUrls.map((u) => loadImageAsPng(u, 360)));
+      const logoPorUrl = new Map(logoUrls.map((u, i) => [u, logosCarregados[i]]));
+      const produtosCards: PdfProdutoCard[] = produtosSel.map((p) => ({
+        nome: p.nome,
+        fabricante: p.fabricanteNome ?? null,
+        solucao: p.solucaoTitle ?? null,
+        descricao: p.descricaoCurta ?? null,
+        logo: p.fabricanteLogoUrl ? logoPorUrl.get(p.fabricanteLogoUrl) ?? null : null,
+        href: produtoHref(p.slug),
+      }));
 
       // Imagens (SVG/WEBP → PNG) em paralelo
       const selFab = new Set(selection.fabricantes);
@@ -416,7 +418,45 @@ export const PortfolioPdfPage = () => {
         Promise.all(fabricantesSel.map((f) => loadImageAsPng(f.logoUrl, 420))),
         QRCode.toDataURL(config.siteUrl || DEFAULT_CONFIG.siteUrl, { margin: 0, width: 320, errorCorrectionLevel: 'M' }),
       ]);
-      const fabricantes: PdfFabricante[] = fabricantesSel.map((f, i) => ({ nome: f.nome, logo: fabLogos[i] }));
+      const fabricantes: PdfFabricante[] = fabricantesSel.map((f, i) => ({ nome: f.nome, logo: fabLogos[i], href: fabricanteHref(f.slug) }));
+
+      // Regra: exatamente 1 produto selecionado → seção completa do produto
+      let produtoDestaque: PdfProdutoDestaque | null = null;
+      if (selection.produtos.length === 1) {
+        const resumo = produtoById.get(selection.produtos[0]);
+        if (resumo) {
+          const det = await authFetch(`/produtos/${encodeURIComponent(resumo.slug || resumo.id)}`);
+          const pares = (items: unknown): PdfTituloDescricao[] =>
+            (Array.isArray(items) ? items : [])
+              .map((x: any) => ({ titulo: String(x?.titulo ?? x?.title ?? '').trim(), descricao: String(x?.descricao ?? x?.description ?? '').trim() }))
+              .filter((x) => x.titulo || x.descricao);
+          const [imagem, fabricanteLogo] = await Promise.all([
+            loadImageAsPng(det.imagemUrl, 900),
+            loadImageAsPng(det.fabricanteLogoUrl, 360),
+          ]);
+          produtoDestaque = {
+            nome: det.nome,
+            subcategoria: det.subcategoria ?? null,
+            solucao: det.solucaoNome ?? resumo.solucaoTitle ?? null,
+            descricaoCurta: det.descricaoCurta ?? null,
+            descricaoCompleta: det.descricaoCompleta ?? null,
+            diferenciais: pares(det.diferenciais),
+            casosDeUso: pares(det.casosDeUso),
+            fabricanteNome: det.fabricanteNome ?? null,
+            fabricanteLogo,
+            imagem,
+            linkOficial: det.linkOficial ?? null,
+            servicosEyebrow: det.servicosEyebrow ?? null,
+            servicosTitulo: det.servicosTitulo ?? null,
+            servicosDescricao: det.servicosDescricao ?? null,
+            href: produtoHref(det.slug ?? resumo.slug),
+            fabricanteHref: fabricanteHref(det.fabricanteSlug ?? resumo.fabricanteSlug),
+            servicos: (Array.isArray(det.servicos) ? det.servicos : [])
+              .map((s: any) => ({ nome: String(s?.nome ?? ''), icone: s?.icone ? String(s.icone) : null }))
+              .filter((s: { nome: string }) => s.nome),
+          };
+        }
+      }
 
       const selServ = new Set(selection.servicos);
       const servicos = catalog.servicos.filter((s) => selServ.has(s.id)).map((s) => s.nome);
@@ -424,7 +464,9 @@ export const PortfolioPdfPage = () => {
       const now = new Date();
       const data: PortfolioDocumentData = {
         config,
+        produtoDestaque,
         solucoes: cards,
+        produtos: produtosCards,
         fabricantes,
         servicos,
         logo,
@@ -504,8 +546,7 @@ export const PortfolioPdfPage = () => {
               {tab === 0 && (
                 <>
                   <Alert severity="info" sx={{ mb: 2 }}>
-                    Cada solução vira um card. Se você marcar produtos dela, eles aparecem dentro do card; sem produtos, o
-                    card mostra os recursos-chave da solução.
+                    Cada solução marcada vira um card na seção “Nossas soluções”, com o nome e uma descrição curta.
                   </Alert>
                   <OptionList
                     options={catalog.solucoes.map((s) => ({ id: s.id, label: s.titulo, hint: s.subtituloCurto ?? undefined }))}
@@ -517,8 +558,10 @@ export const PortfolioPdfPage = () => {
               )}
               {tab === 1 && (
                 <>
-                  <Alert severity="info" sx={{ mb: 2 }}>
-                    Marcar um produto marca automaticamente a solução dele.
+                  <Alert severity={selection.produtos.length === 1 ? 'success' : 'info'} sx={{ mb: 2 }}>
+                    {selection.produtos.length === 1
+                      ? `Produto em destaque: “${produtoById.get(selection.produtos[0])?.nome ?? ''}” ganha uma seção completa no PDF (visão geral, diferenciais, casos de uso, serviços e fabricante).`
+                      : 'Com 2 ou mais produtos, eles aparecem na seção “Nossos produtos” (com o logo do fabricante). Marque apenas 1 para ele ganhar uma seção completa.'}
                   </Alert>
                   <OptionList
                     grouped
@@ -583,6 +626,7 @@ export const PortfolioPdfPage = () => {
                     helper: 'Separe parágrafos com uma linha em branco.',
                   })}
                   {field(config, setConfig, 'portfolioTitulo', 'Título da seção de soluções')}
+                  {field(config, setConfig, 'produtosTitulo', 'Título da seção de produtos')}
                   <FormControlLabel
                     control={
                       <Switch

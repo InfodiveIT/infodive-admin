@@ -6,6 +6,7 @@ export type PortfolioConfig = {
   intro: string;
   bannerTexto: string;
   portfolioTitulo: string;
+  produtosTitulo: string;
   showDiferenciais: boolean;
   diferenciaisTitulo: string;
   diferenciais: string; // um por linha
@@ -27,7 +28,8 @@ export const DEFAULT_CONFIG: PortfolioConfig = {
     'A Infodive IT apoia empresas na transformação e sustentação de ambientes críticos de TI com foco em performance, segurança, disponibilidade e inovação.',
   bannerTexto:
     'Com atuação consultiva e foco em resultados, a Infodive entrega soluções completas para infraestrutura de TI, virtualização, backup, segurança, cloud e modernização de ambientes corporativos.\n\nNosso compromisso é simplificar operações, aumentar eficiência e garantir ambientes mais resilientes e seguros.',
-  portfolioTitulo: 'Nosso portfólio',
+  portfolioTitulo: 'Nossas soluções',
+  produtosTitulo: 'Nossos produtos',
   showDiferenciais: true,
   diferenciaisTitulo: 'Nossos diferenciais',
   diferenciais:
@@ -58,14 +60,19 @@ export type SolucaoItem = {
 export type ProdutoItem = {
   id: string;
   nome: string;
+  slug?: string;
   solucaoSlug?: string | null;
   solucaoTitle?: string | null;
   fabricanteNome?: string | null;
+  fabricanteLogoUrl?: string | null;
+  fabricanteSlug?: string | null;
+  descricaoCurta?: string | null;
 };
 
 export type FabricanteItem = {
   id: string;
   nome: string;
+  slug?: string;
   logoUrl?: string | null;
   descricaoCurta?: string | null;
   ordem?: number;
@@ -85,17 +92,52 @@ export type PdfImage = { src: string; ratio: number; needsDarkBg?: boolean };
 
 export type PdfSolucaoCard = {
   titulo: string;
-  itens: string[];
+  descricao: string | null;
+};
+
+export type PdfProdutoCard = {
+  nome: string;
+  fabricante: string | null;
+  solucao: string | null;
+  descricao: string | null;
+  logo: PdfImage | null;
+  href: string | null; // página do produto no site
 };
 
 export type PdfFabricante = {
   nome: string;
   logo: PdfImage | null;
+  href?: string | null; // catálogo do site filtrado pelo fabricante
+};
+
+// Produto expandido (quando exatamente 1 produto é selecionado)
+export type PdfTituloDescricao = { titulo: string; descricao: string };
+
+export type PdfProdutoDestaque = {
+  nome: string;
+  subcategoria: string | null;
+  solucao: string | null;
+  descricaoCurta: string | null;
+  descricaoCompleta: string | null;
+  diferenciais: PdfTituloDescricao[];
+  casosDeUso: PdfTituloDescricao[];
+  fabricanteNome: string | null;
+  fabricanteLogo: PdfImage | null;
+  imagem: PdfImage | null;
+  linkOficial: string | null;
+  servicosEyebrow: string | null;
+  servicosTitulo: string | null;
+  servicosDescricao: string | null;
+  servicos: { nome: string; icone: string | null }[];
+  href: string | null; // página do produto no site
+  fabricanteHref: string | null; // catálogo do site filtrado pelo fabricante
 };
 
 export type PortfolioDocumentData = {
   config: PortfolioConfig;
+  produtoDestaque: PdfProdutoDestaque | null;
   solucoes: PdfSolucaoCard[];
+  produtos: PdfProdutoCard[];
   fabricantes: PdfFabricante[];
   servicos: string[];
   logo: PdfImage | null;

@@ -19,6 +19,22 @@ const decodeImage = (objectUrl: string): Promise<HTMLImageElement> =>
     img.src = objectUrl;
   });
 
+// Busca direta primeiro (Supabase e infodive.com.br liberam CORS); se falhar, usa o proxy do admin.
+const fetchImageBlob = async (url: string): Promise<Blob | null> => {
+  const attempts = isSameOrigin(url) ? [url] : [url, `${PROXY_PATH}?url=${encodeURIComponent(url)}`];
+  for (const attempt of attempts) {
+    try {
+      const response = await fetch(attempt, { mode: 'cors' });
+      if (!response.ok) continue;
+      const blob = await response.blob();
+      if (blob.type.startsWith('image/') || blob.size > 0) return blob;
+    } catch {
+      // tenta a próxima forma
+    }
+  }
+  return null;
+};
+
 // Logos pensados para fundo escuro têm bastante branco; sobre papel branco sumiriam.
 const mostlyLight = (ctx: CanvasRenderingContext2D, width: number, height: number): boolean => {
   try {
@@ -52,10 +68,8 @@ export async function loadImageAsPng(url: string | null | undefined, maxWidth = 
   if (!url) return null;
   let objectUrl: string | null = null;
   try {
-    const fetchUrl = isSameOrigin(url) ? url : `${PROXY_PATH}?url=${encodeURIComponent(url)}`;
-    const response = await fetch(fetchUrl);
-    if (!response.ok) return null;
-    const blob = await response.blob();
+    const blob = await fetchImageBlob(url);
+    if (!blob) return null;
     objectUrl = URL.createObjectURL(blob);
 
     const img = await decodeImage(objectUrl);
