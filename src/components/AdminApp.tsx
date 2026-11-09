@@ -1,6 +1,6 @@
 import React from 'react';
-import { Admin, Resource, defaultTheme, Layout, Menu, usePermissions } from 'react-admin';
-import { Navigate } from 'react-router-dom';
+import { Admin, Resource, CustomRoutes, defaultTheme, Layout, Menu, usePermissions } from 'react-admin';
+import { Navigate, Route } from 'react-router-dom';
 import { createTheme } from '@mui/material/styles';
 import ExpandMore from '@mui/icons-material/ExpandMore';
 import ChevronRight from '@mui/icons-material/ChevronRight';
@@ -174,6 +174,7 @@ import PeopleIcon from '@mui/icons-material/People';
 import SupervisorAccountIcon from '@mui/icons-material/SupervisorAccount';
 import GavelIcon from '@mui/icons-material/Gavel';
 import HandshakeIcon from '@mui/icons-material/Handshake';
+import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
 
 // Custom Views
 import {
@@ -263,6 +264,7 @@ import {
 } from './admins';
 
 import { PoliticaList, PoliticaEdit } from './politicas';
+import { PortfolioPdfPage } from './portfolio-pdf';
 import {
   ClienteHomeList,
   ClienteHomeEdit,
@@ -545,6 +547,9 @@ const MyMenu = () => {
         </List>
       </Collapse>
 
+      {/* Portfólio PDF */}
+      <Menu.Item to="/portfolio-pdf" primaryText="Portfólio PDF" leftIcon={<PictureAsPdfIcon />} />
+
       {/* 9. Auditoria & Admins */}
       <ListItemButton onClick={() => toggleGroup('admins')} sx={{ borderRadius: '8px', margin: '4px 8px' }}>
         <ListItemIcon sx={{ minWidth: 40 }}><PeopleIcon /></ListItemIcon>
@@ -629,6 +634,11 @@ export default function AdminApp() {
       layout={MyLayout}
       dashboard={CustomDashboard}
     >
+      {/* ─── PORTFÓLIO PDF (rota própria, somente ADMIN) ─────────────────────── */}
+      <CustomRoutes>
+        <Route path="/portfolio-pdf" element={<AdminOnlyGuard><PortfolioPdfPage /></AdminOnlyGuard>} />
+      </CustomRoutes>
+
       {/* ─── 1. CATÁLOGO ────────────────────────────────────────────────────── */}
       <Resource
         name="categorias"
