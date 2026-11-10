@@ -399,7 +399,7 @@ export const PortfolioPdfPage = () => {
       // Seção "Nossos produtos" (com 2+ produtos; com 1 só, ele vira a seção completa "Conheça o …")
       const produtosSel = selection.produtos.length >= 2 ? catalog.produtos.filter((p) => selProd.has(p.id)) : [];
       const logoUrls = Array.from(new Set(produtosSel.map((p) => p.fabricanteLogoUrl).filter((u): u is string => Boolean(u))));
-      const logosCarregados = await Promise.all(logoUrls.map((u) => loadImageAsPng(u, 360)));
+      const logosCarregados = await Promise.all(logoUrls.map((u) => loadImageAsPng(u, 360, true)));
       const logoPorUrl = new Map(logoUrls.map((u, i) => [u, logosCarregados[i]]));
       const produtosCards: PdfProdutoCard[] = produtosSel.map((p) => ({
         nome: p.nome,
@@ -415,7 +415,7 @@ export const PortfolioPdfPage = () => {
       const fabricantesSel = catalog.fabricantes.filter((f) => selFab.has(f.id));
       const [logo, fabLogos, qrDataUrl] = await Promise.all([
         loadImageAsPng('/logo-infodive.png', 800),
-        Promise.all(fabricantesSel.map((f) => loadImageAsPng(f.logoUrl, 420))),
+        Promise.all(fabricantesSel.map((f) => loadImageAsPng(f.logoUrl, 420, true))),
         QRCode.toDataURL(config.siteUrl || DEFAULT_CONFIG.siteUrl, { margin: 0, width: 320, errorCorrectionLevel: 'M' }),
       ]);
       const fabricantes: PdfFabricante[] = fabricantesSel.map((f, i) => ({ nome: f.nome, logo: fabLogos[i], href: fabricanteHref(f.slug) }));
@@ -432,7 +432,7 @@ export const PortfolioPdfPage = () => {
               .filter((x) => x.titulo || x.descricao);
           const [imagem, fabricanteLogo] = await Promise.all([
             loadImageAsPng(det.imagemUrl, 900),
-            loadImageAsPng(det.fabricanteLogoUrl, 360),
+            loadImageAsPng(det.fabricanteLogoUrl, 360, true),
           ]);
           produtoDestaque = {
             nome: det.nome,

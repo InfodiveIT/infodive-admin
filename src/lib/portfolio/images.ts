@@ -59,12 +59,41 @@ const mostlyLight = (ctx: CanvasRenderingContext2D, width: number, height: numbe
   }
 };
 
+// Converte tipografia/elementos brancos neutros (como o texto de Red Hat e AWS) para escuro (#141413),
+// preservando elementos coloridos da marca (chapéu vermelho da Red Hat, seta laranja da AWS) e o canal alpha.
+const darkenLightNeutralPixels = (ctx: CanvasRenderingContext2D, width: number, height: number): void => {
+  try {
+    const imageData = ctx.getImageData(0, 0, width, height);
+    const { data } = imageData;
+    for (let i = 0; i < data.length; i += 4) {
+      if (data[i + 3] === 0) continue;
+      const r = data[i];
+      const g = data[i + 1];
+      const b = data[i + 2];
+      const spread = Math.max(r, g, b) - Math.min(r, g, b);
+      const lum = (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255;
+      if (spread < 40 && lum > 0.65) {
+        data[i] = 20;
+        data[i + 1] = 20;
+        data[i + 2] = 19;
+      }
+    }
+    ctx.putImageData(imageData, 0, 0);
+  } catch {
+    // fallback silencioso caso o canvas não permita leitura/escrita
+  }
+};
+
 /**
  * Baixa uma imagem (SVG, WEBP, JPG, PNG…) e converte para PNG em data URL,
  * que é o formato que o gerador de PDF aceita com segurança.
  * Retorna null se não for possível carregar (o PDF segue sem a imagem).
  */
-export async function loadImageAsPng(url: string | null | undefined, maxWidth = 520): Promise<PdfImage | null> {
+export async function loadImageAsPng(
+  url: string | null | undefined,
+  maxWidth = 520,
+  forLightBg = false,
+): Promise<PdfImage | null> {
   if (!url) return null;
   let objectUrl: string | null = null;
   try {
@@ -87,7 +116,13 @@ export async function loadImageAsPng(url: string | null | undefined, maxWidth = 
     if (!ctx) return null;
     ctx.drawImage(img, 0, 0, width, height);
 
-    return { src: canvas.toDataURL('image/png'), ratio: naturalW / naturalH, needsDarkBg: mostlyLight(ctx, width, height) };
+    const isMostlyLight = mostlyLight(ctx, width, height);
+    if (forLightBg && isMostlyLight) {
+      darkenLightNeutralPixels(ctx, width, height);
+      return { src: canvas.toDataURL('image/png'), ratio: naturalW / naturalH, needsDarkBg: false };
+    }
+
+    return { src: canvas.toDataURL('image/png'), ratio: naturalW / naturalH, needsDarkBg: isMostlyLight };
   } catch {
     return null;
   } finally {
